@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Dashboard - SmartPaint</title>
+
+    <style>
+        /* FIX AREA PUTIH: Pastikan dasar halaman sewarna dengan gradient */
+        html, body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background-color: #0b0f1a; /* Warna gelap agar tidak putih */
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* FIX MAIN: Pakai flex-grow agar biru memenuhi sisa layar */
+        main {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 2rem 1rem;
+            background: linear-gradient(135deg, #0b0f1a 0%, #0f172a 40%, #0a3cff 100%);
+        }
+
+        .dashboard-content {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: white;
+        }
+
+        .dashboard-content h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* FIX BUTTONS: Tetap pakai logika kamu tapi rapi di HP */
+        .dashboard-buttons {
+            display: flex;
+            flex-direction: column; /* Susun ke bawah di HP */
+            width: 100%;
+            max-width: 450px;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .dashboard-buttons > div {
+            position: relative;
+            height: 160px; /* Tinggi kotak yang pas di layar HP */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 20px;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        /* Overlay gelap agar teks terbaca */
+        .dashboard-buttons > div::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
+
+        /* Link tetap berfungsi penuh */
+        .dashboard-buttons > div a {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
+            color: #ffffff;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Gambar background sesuai folder static kamu */
+        .dashboard-buttons > div:nth-child(1) { background-image: url("/static/images/Deteksi.jpg"); }
+        .dashboard-buttons > div:nth-child(2) { background-image: url("/static/images/Monitoring.jpg"); }
+        .dashboard-buttons > div:nth-child(3) { background-image: url("/static/images/Histori.webp"); }
+
+        /* Responsive: Jika layar lebar (Tablet/Laptop), susun ke samping lagi */
+        @media (min-width: 768px) {
+            .dashboard-buttons {
+                flex-direction: row;
+                max-width: 1000px;
+                height: 350px;
+            }
+            .dashboard-buttons > div {
+                flex: 1;
+                height: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body class="dashboard-page">
+    {% include 'navbar_private.html' %}
+
+    <main>
+        <div class="dashboard-content">
+            <h1>Dashboard SmartPaint</h1>
+            <p>Selamat datang di sistem SmartPaint, pilih menu di bawah untuk mulai menggunakan fitur utama</p>
+        </div>
+
+        <div class="dashboard-buttons">
+            <div>
+                <a href="/detect" class="dashboard-btn">Deteksi Warna</a>
+            </div>
+
+            <div>
+                <a href="/monitoring" class="dashboard-btn">Monitoring</a>
+            </div>
+
+            <div>
+                <a href="/history" class="dashboard-btn">History</a>
+            </div>
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='login-auth.js') }}" type="module"></script>
+    <script src="{{ url_for('static', filename='scripts.js') }}" type="module"></script>
+</body>
+</html>

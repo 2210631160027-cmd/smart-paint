@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riwayat Deteksi Warna | SmartPaint</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+<style>
+    /* --- RESET & LAYOUT --- */
+    html, body {
+        margin: 0; padding: 0;
+        height: auto; min-height: 100vh;
+        background-color: #0b0f1a;
+        font-family: 'Poppins', sans-serif;
+        color: white;
+    }
+
+    body { display: flex; flex-direction: column; }
+
+    main {
+        flex: 1 0 auto;
+        padding: 6rem 1.5rem 5rem;
+        background: linear-gradient(135deg, #0b0f1a 0%, #0f172a 40%, #0a3cff 100%);
+        background-attachment: fixed;
+        width: 100%; box-sizing: border-box;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; width: 100%; }
+
+    h1 {
+        text-align: center; margin-bottom: 50px; font-size: 2.2rem; font-weight: 700;
+        background: linear-gradient(to right, #ffffff, #4d7cff);
+        -webkit-background-clip: text; background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 30px; align-items: start;
+    }
+
+    .history-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+        border-radius: 24px; overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        display: flex; flex-direction: column; transition: 0.3s;
+    }
+
+    .history-card:hover { transform: translateY(-5px); border-color: rgba(77, 124, 255, 0.5); }
+
+    .history-image { width: 100%; height: 220px; object-fit: cover; background-color: #1a2234; }
+
+    .history-content { padding: 20px; }
+
+    .section-title {
+        font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+        color: #4d7cff; margin: 15px 0 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 4px;
+    }
+
+    .detail-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
+
+    .mix-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 20px; }
+
+    .mix-item {
+        background: rgba(255, 255, 255, 0.03); padding: 8px 4px;
+        border-radius: 10px; text-align: center; font-size: 0.75rem;
+        border-left: 3px solid transparent;
+    }
+
+    .btn-remix {
+        width: 100%;
+        background: linear-gradient(90deg, #0a3cff, #4d7cff);
+        color: white; border: none; padding: 12px;
+        border-radius: 12px; font-family: inherit; font-weight: 600;
+        cursor: pointer; transition: 0.3s; display: flex;
+        align-items: center; justify-content: center; gap: 8px;
+    }
+
+    .btn-remix:hover { filter: brightness(1.2); box-shadow: 0 0 15px rgba(10, 60, 255, 0.4); }
+    .btn-remix:disabled { background: #1e293b; color: #64748b; cursor: not-allowed; }
+
+    @media (max-width: 768px) {
+        main { padding-top: 6.5rem; }
+        .grid { grid-template-columns: 1fr; }
+    }
+</style>
+</head>
+<body>
+
+{% include 'navbar_private.html' %}
+
+<main>
+    <div class="container">
+        <h1>Riwayat Deteksi</h1>
+
+        {% if records %}
+        <div class="grid">
+            {% for item in records %}
+            <div class="history-card">
+                {% if item.image %}
+                <img src="{{ url_for('static', filename='history/' ~ item.image) }}" class="history-image" alt="Hasil Deteksi">
+                {% else %}
+                <div class="history-image" style="display:flex; align-items:center; justify-content:center; color:gray;">No Image</div>
+                {% endif %}
+
+                <div class="history-content">
+                    <div class="detail-row">
+                        <strong>Tanggal</strong>
+                        <span style="font-size: 0.8rem; color: #ccc;">{{ item.timestamp }}</span>
+                    </div>
+
+                    <div class="section-title">Warna Terdeteksi</div>
+                    <div class="detail-row">
+                        <span>RGB: 
+                            <b style="color:#ff4d4d">{{ item.rgb_normalize.r | default(0) }}</b> 
+                            <b style="color:#4dff88">{{ item.rgb_normalize.g | default(0) }}</b> 
+                            <b style="color:#4d7cff">{{ item.rgb_normalize.b | default(0) }}</b>
+                        </span>
+                    </div>
+
+                    <div class="section-title">Komposisi Campuran (ml)</div>
+                    <div class="mix-grid">
+                        <div class="mix-item" style="border-color: #ff4d4d;">R: {{ item.mix_ml.R | default(0) }}</div>
+                        <div class="mix-item" style="border-color: #4dff88;">G: {{ item.mix_ml.G | default(0) }}</div>
+                        <div class="mix-item" style="border-color: #4d7cff;">B: {{ item.mix_ml.B | default(0) }}</div>
+                        <div class="mix-item" style="border-color: #eab308;">Y: {{ item.mix_ml.Y | default(0) }}</div>
+                        <div class="mix-item" style="border-color: #ffffff;">W: {{ item.mix_ml.W | default(0) }}</div>
+                        <div class="mix-item" style="border-color: #475569;">Bl: {{ item.mix_ml.Bl | default(0) }}</div>
+                    </div>
+
+                    <button class="btn-remix action-remix" 
+                            data-mix='{{ item.mix_ml | tojson | safe }}'>
+                        🔄 Mix Ulang Sekarang
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align:center; padding: 50px;">
+            <p style="opacity:0.5;">Belum ada data riwayat deteksi.</p>
+        </div>
+        {% endif %}
+    </div>
+</main>
+
+<script>
+    // Tunggu DOM selesai dimuat
+    document.addEventListener('DOMContentLoaded', function() {
+        const buttons = document.querySelectorAll('.action-remix');
+        
+        buttons.forEach(button => {
+            button.addEventListener('click', async function() {
+                // Ambil data JSON dari atribut data-mix
+                const mixData = JSON.parse(this.getAttribute('data-mix'));
+
+                if (!confirm("Apakah Anda ingin memproses ulang campuran warna ini?")) return;
+
+                const originalText = this.innerHTML;
+                this.disabled = true;
+                this.innerHTML = "⏳ Mengirim...";
+
+                try {
+                    const response = await fetch("/mqtt_publish", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(mixData)
+                    });
+
+                    if (response.ok) {
+                        alert("✅ Berhasil! Sinyal mixing telah dikirim.");
+                        this.innerHTML = "✅ Berhasil";
+                    } else {
+                        throw new Error("Gagal kirim sinyal.");
+                    }
+                } catch (error) {
+                    alert("❌ Error: " + error.message);
+                    this.innerHTML = originalText;
+                } finally {
+                    setTimeout(() => {
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                    }, 3000);
+                }
+            });
+        });
+    });
+</script>
+
+</body>
+</html>

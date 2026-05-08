@@ -1,0 +1,39 @@
+<div class="navbar">
+    <img class="logo-img" src="{{ url_for('static', filename='images/default_logo.png') }}" />
+
+    <span class="hamburger">&#9776;</span>
+
+    <div class="navbar-right" id="navbarRight">
+        <span class="closebtn">&times;</span>
+
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('about') }}">About</a>
+
+        <div class="dropdown">
+            <a class="dropbtn">Account</a>
+            <div class="dropdown-content">
+                <a href="#">Profile</a>
+                <a href="#">Settings</a>
+                <a id="sign-out-btn" href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const hamburger = document.querySelector(".hamburger");
+    const navbarRight = document.getElementById("navbarRight");
+    const closebtn = document.querySelector(".closebtn");
+
+    hamburger.addEventListener("click", () => {
+        navbarRight.classList.add("active");
+    });
+
+    closebtn.addEventListener("click", () => {
+        navbarRight.classList.remove("active");
+    });
+
+});
+</script>

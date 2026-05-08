@@ -1,0 +1,690 @@
+:root {
+    --primary-color: #f4f4f4;
+    --primary-light-color: #FFE769;
+    --secondary-color: #FFE4BA;
+    --secondary-light-color: #FFF6E8;
+    --post-color: #62EEA8;
+    --delete-color: #FF9F9F;
+    --light-color: #FFFEFC;
+    --grey-color: #747E79;
+    --dark-color: #000000;
+
+    --primary-font: 'Poppins', sans-serif;
+    --seconday-font: 'Poppins', sans-serif;
+    
+    --border-width: 3px;
+    --element-border-radius: 5px;
+    
+    --button-height: 5px;
+    --small-button-height: 2px;
+    
+    --element-padding: 0.8em;
+    
+    --maximum-width: 320px;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    font-size: 16px;
+}
+
+body {
+    color: var(--dark-color);
+    background-color: var(--primary-color);
+    font-family: var(--primary-font);
+    height: 100vh;
+}
+
+main {
+  min-height: calc(100vh - 80px); /* tinggi layar dikurangi navbar */
+  background: linear-gradient(
+    135deg,
+    #0b0f1a 0%,   /* hitam kebiruan */
+    #0f172a 40%,  /* dark navy */
+    #0a3cff 100%  /* biru modern */
+  );
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #e5e7eb; /* teks jadi terang */
+}
+
+
+
+
+
+/* === Structure === */
+
+.container {
+    max-width: var(--maximum-width);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+
+/* === Navbar === */
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(
+    135deg,
+    #0b0f1a 0%,
+    #0f172a 60%,
+    #0a3cff 100%
+  );
+    color: black;
+    box-shadow: 0px 8px 16px -4px rgba(128, 128, 128, 0.2);
+
+
+    width: 100%;
+    
+}
+
+.logo-img {
+    width: 80px;
+    margin-left: 1rem;
+}
+
+.logo {
+    font-size: 3rem;
+    text-decoration: none;
+    color: white;
+}
+
+.navbar a {
+  position: relative;
+  padding: 5px 22px;
+  border-radius: 10px;
+
+  color: #e5e7eb;
+  text-decoration: none;
+  font-weight: 500;
+
+  background: rgba(255, 255, 255, 0.05); /* base */
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.35);       /* timbul */
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.navbar-right {
+    display: flex;
+    align-items: center; 
+    margin-right: 2rem;
+    gap: 30px;
+}
+
+.navbar a:hover {
+    background-color: #ddd;
+    color: black;
+}
+
+
+/* Style the dropdown button */
+.dropdown {
+    position: relative; /* This makes the positioning of the dropdown content relative to this container */
+    display: inline-block;
+}
+
+.dropdown .dropbtn {
+    cursor: pointer;
+}
+
+/* Dropdown content (hidden by default) */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+    margin-top: 1.5rem;
+    right: 0; 
+    left: auto;
+    white-space: nowrap;
+}
+
+/* Links inside the dropdown */
+.dropdown-content a {
+    color: black;
+    padding: 1rem 1rem;
+    text-decoration: none;
+    display: block;
+    text-align: left; /* Ensure text is aligned to the left */
+}
+
+
+/* Show the dropdown content on hover */
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+/* === Hamburger Menu === */
+.hamburger {
+    display: none;
+    font-size: 30px;
+    cursor: pointer;
+}
+
+.closebtn {
+    display: none;
+}
+
+.hide {
+    display: none;
+}
+
+
+
+
+/* === Buttons === */
+
+button {
+    font-weight: 600;
+    width: 100%;
+}
+
+button:hover {
+    cursor: pointer;
+}
+
+
+/* === Forms === */
+
+input, button {
+    padding: var(--element-padding);
+    border-radius: var(--element-border-radius);
+    width: 100%;
+    font-size: 1.1em;
+    text-align: center;
+}
+
+  
+
+
+
+/* Auth page styles - Login, Signup, Forgot Password */
+
+.auth-page_container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+
+
+}
+
+.login-form-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 400px;
+
+  background: rgba(0, 54, 126, 0.08); /* transparan */
+  backdrop-filter: blur(12px);           /* efek kaca */
+  -webkit-backdrop-filter: blur(12px);
+
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  margin-top: 1rem;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    width: 100%;
+}
+  
+.login-form h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+  
+.input-group {
+    margin-bottom: 20px;
+}
+  
+.input-group label {
+    display: block;
+    margin-bottom: 5px;
+}
+  
+.input-group input {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: calc(100% - 20px);
+}
+  
+.input-group, .login-btn, .google-login-btn {
+    width: 100%; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.input-group {
+    flex-direction: column;
+
+}
+
+.login-btn {
+    background: linear-gradient(135deg, #0066ff, #00c6ff);
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    font-weight: 500;
+    color: white;
+    cursor: pointer;
+    height: 2.5rem;
+    font-size: 1.2rem;
+}
+
+.login-btn:hover {
+    transition: all 0.2s ease;
+    transform: scale(1.05);
+}
+
+.google-login-btn {
+    color: var(--dark-color);
+    background-color: var(--light-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5em;
+    border: 1px solid rgba(0, 0, 0, 0.25);  
+}
+
+.google-login-btn:hover {
+    transition: all 0.2s ease;
+    transform: scale(1.05);
+}
+
+.google-btn-logo {
+    width: 1.375em;
+}
+
+.alt-signin-divider {
+    margin: 1em 0;
+    text-align: center;
+    font-size: 0.875em;
+    color: var(--dark-color);
+}
+
+.signup-link-container {
+    text-align: center;
+    margin-top: 1em;
+}
+
+.error-msg {
+    color: red;
+    font-size: 1rem;
+    margin-top: 0.5em;
+    text-align: center;
+}
+
+.login-link-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dark-color);
+    text-decoration: none;
+    font-weight: 500;
+    max-width: 10rem;
+    margin-top: 1rem;
+    height: 2.5rem;
+    cursor: pointer;
+    background-color: rgb(202, 195, 195);
+    border: none;
+}
+
+.login-link-btn:hover {
+    background-color: var(--grey-color);
+    border: none;
+    color: white;
+}
+
+/* Footer Styles */
+
+footer {
+    background-color: var(--grey-color); /* Light grey background */
+    color: white; /* Dark grey text */
+    font-family: var(--primary-font);
+    text-align: center; /* Centering the content */
+    padding: 10px 0; /* Padding above and below */
+    font-size: 14px; /* Standard font size */
+}
+
+.simple-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1rem; /* Padding on the sides */
+}
+
+.simple-footer a {
+    color: white; /* Standard link color */
+    text-decoration: none; /* No underlines on links */
+    margin: 0 5px; /* Margins for spacing */
+}
+
+.simple-footer a:hover {
+    text-decoration: underline; /* Underline on hover for better user interaction */
+}
+
+
+
+
+
+/* Responsive */
+@media screen and (max-width: 600px) {
+
+    /* ===== NAVBAR ===== */
+    .navbar {
+        position: relative;
+        z-index: 2000;
+    }
+
+    .navbar-right {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100vh;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+
+        background-color: var(--primary-color);
+        overflow-y: auto;
+        transition: left 0.4s ease;
+
+        z-index: 3000;
+    }
+
+    /* STATE MENU TERBUKA */
+    .navbar-right.active {
+        left: 0;
+    }
+
+    .navbar-right a {
+        font-size: 2rem;
+        padding: 15px;
+        color: black;
+        display: block;
+        text-align: center;
+    }
+
+    .dropdown {
+        width: 100%;
+    }
+
+    .dropdown-content {
+        position: relative;
+        width: 100%;
+        text-align: center;
+        box-shadow: none;
+    }
+
+    .dropdown-content a {
+        font-size: 1.6rem;
+        color: gray;
+    }
+
+    .hamburger {
+        display: block;
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        font-size: 2.2rem;
+        z-index: 3500;
+        cursor: pointer;
+    }
+
+    .closebtn {
+        display: block;
+        position: absolute;
+        top: 0;
+        right: 1rem;
+        font-size: 3rem;
+        cursor: pointer;
+        color: black;
+    }
+
+    /* ===== DASHBOARD ===== */
+    .dashboard-content {
+        margin: 1.2rem 0 1.5rem;
+        padding: 0 1.2rem;
+        text-align: center;
+    }
+
+    .dashboard-content h1 {
+        font-size: 1.8rem;
+        line-height: 1.3;
+        margin-bottom: 0.6rem;
+    }
+
+    .dashboard-content p {
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 0.4rem;
+        opacity: 0.9;
+    }
+
+    .dashboard-buttons {
+        position: relative;
+        z-index: 1;
+        flex-direction: column;
+        width: 100%;
+        margin-left: 0;
+        min-height: auto;
+    }
+
+    .dashboard-buttons > div {
+        min-height: 50px;
+        transform: none !important;
+        box-shadow: none;
+    }
+
+    .dashboard-btn {
+        font-size: 1.3rem;
+    }
+
+    .desc {
+        max-width: 90%;
+        font-size: 0.9rem;
+    }
+
+    /* ===== SAFETY ===== */
+    body {
+        overflow-x: hidden;
+    }
+}
+
+
+:root {
+  --bg-color: #ffffff;
+  --text-color: #ffffff;
+  --navbar-bg: #0b0f1a;
+  --card-bg: #efefef;
+}
+
+[data-theme="dark"] {
+  --bg-color: #121212;
+  --text-color: #ffffff;
+  --navbar-bg: #1c1c1c;
+  --card-bg: #222;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.4s, color 0.4s;
+}
+
+.navbar {
+  background-color: var(--navbar-bg);
+  transition: background-color 0.3s;
+}
+
+.navbar a, .dropdown-content a {
+  color: var(--text-color);
+}
+
+.theme-toggle {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.3rem;
+  margin-left: 15px;
+  color: var(--text-color);
+  transition: transform 0.2s;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.2);
+}
+
+/* =========================
+   NAVBAR FIX FINAL
+========================= */
+
+.navbar {
+  position: relative;
+  width: 100%;
+  padding: 15px 40px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  /* 🔥 background gelap transparan */
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+}
+
+/* FIX LOGO BIAR GA GEPENG */
+.logo-img {
+  height: 40px;
+  width: auto;          /* 🔥 penting */
+  object-fit: contain;  /* 🔥 jaga rasio */
+}
+
+/* Menu kanan */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+.navbar a {
+  text-decoration: none;
+  color: white;
+  font-weight: 500;
+  transition: 0.3s ease;
+}
+
+.navbar a:hover {
+  opacity: 0.7;
+}
+
+/* Dropdown */
+
+.dropdown {
+  position: relative;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 35px;
+  background: rgba(0,0,0,0.95);
+  padding: 10px;
+  border-radius: 8px;
+  min-width: 140px;
+}
+
+.dropdown-content a {
+  display: block;
+  padding: 8px 10px;
+  color: white;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+/* Hamburger desktop hidden */
+.hamburger {
+  display: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: white;
+}
+
+.closebtn {
+  display: none;
+}
+
+/* =========================
+   MOBILE FIX
+========================= */
+
+@media (max-width: 768px) {
+
+  .navbar {
+    padding: 15px 20px;
+  }
+
+  .hamburger {
+    display: block;
+  }
+
+  .navbar-right {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    height: 100vh;
+    width: 75%;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(10px);
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 70px 25px;
+    gap: 20px;
+    transition: 0.4s ease;
+  }
+
+  .navbar-right.active {
+    right: 0;
+  }
+
+  .closebtn {
+    display: block;
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    font-size: 28px;
+    cursor: pointer;
+    color: white;
+  }
+
+  .dropdown-content {
+    position: static;
+    background: none;
+    box-shadow: none;
+    padding-left: 10px;
+  }
+}

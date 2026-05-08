@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Monitoring Sensor | SmartPaint</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <style>
+        /* --- RESET & CORE STYLE --- */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            background-color: #0b0f1a;
+            font-family: 'Poppins', sans-serif;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        main {
+            display: block;
+            width: 100%;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0b0f1a 0%, #0f172a 40%, #0a3cff 100%);
+            background-attachment: fixed;
+            /* Padding disesuaikan agar tidak nabrak navbar atas & navigasi bawah HP */
+            padding: 90px 18px 180px; 
+            box-sizing: border-box;
+        }
+
+        .monitoring-container {
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: 700;
+            font-size: 1.6rem;
+            color: #ffffff;
+        }
+
+        /* --- GLASSBOX DESIGN --- */
+        .glass-box {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 22px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .sensor-card {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .sensor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sensor-label {
+            font-weight: 500;
+            color: #cbd5e1;
+            font-size: 0.85rem;
+        }
+
+        .sensor-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        /* --- TONER LIST --- */
+        .toner-grid {
+            margin-top: 15px;
+        }
+
+        .toner-item {
+            margin-bottom: 15px;
+        }
+
+        .toner-item:last-child { margin-bottom: 0; }
+
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #0a3cff;
+        }
+
+        /* --- STATUS COLORS --- */
+        .status-danger { color: #ff4d4d !important; }
+        .status-safe { color: #4dff88 !important; }
+        .status-warning { color: #ffcc4d !important; }
+
+        .update-text {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    {% include 'navbar_private.html' %}
+
+    <main>
+        <div class="monitoring-container">
+            <h2>📡 Monitoring System</h2>
+
+            <div class="glass-box">
+                <div class="sensor-card">
+                    <div class="sensor-header">
+                        <span class="sensor-label">📦 Status Wadah Cat</span>
+                        <span id="kalengStatus" class="sensor-value">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-box">
+                <p style="margin: 0 0 15px; color: #94a3b8; font-weight: 600; font-size: 0.8rem; letter-spacing: 0.5px;">💧 VOLUME TONER CAT</p>
+                
+                <div class="toner-grid">
+                    <div class="toner-item">
+                        <div class="sensor-header"><span class="sensor-label">RED</span><span id="vol1" class="sensor-value">-</span></div>
+                        <div class="progress-container"><div id="bar1" class="progress-bar"></div></div>
+                    </div>
+                    <div class="toner-item">
+                        <div class="sensor-header"><span class="sensor-label">GREEN</span><span id="vol2" class="sensor-value">-</span></div>
+                        <div class="progress-container"><div id="bar2" class="progress-bar"></div></div>
+                    </div>
+                    <div class="toner-item">
+                        <div class="sensor-header"><span class="sensor-label">BLUE</span><span id="vol3" class="sensor-value">-</span></div>
+                        <div class="progress-container"><div id="bar3" class="progress-bar"></div></div>
+                    </div>
+                    <div class="toner-item">
+                        <div class="sensor-header"><span class="sensor-label">BLACK</span><span id="vol4" class="sensor-value">-</span></div>
+                        <div class="progress-container"><div id="bar4" class="progress-bar"></div></div>
+                    </div>
+                    <div class="toner-item">
+                        <div class="sensor-header"><span class="sensor-label">WHITE</span><span id="vol5" class="sensor-value">-</span></div>
+                        <div class="progress-container"><div id="bar5" class="progress-bar"></div></div>
+                    </div>
+                    <div class="toner-item">
+                        <div class="sensor-header"><span class="sensor-label">YELLOW</span><span id="vol6" class="sensor-value">-</span></div>
+                        <div class="progress-container"><div id="bar6" class="progress-bar"></div></div>
+                    </div>
+                </div>
+                <p class="update-text">Waktu: <span id="timestamp">-</span></p>
+            </div>
+
+            <div class="glass-box" style="padding: 18px;">
+                <div class="sensor-header" style="margin-bottom: 10px;">
+                    <span class="sensor-label">⚡ Browser</span>
+                    <span id="koneksiStatus" class="sensor-value status-safe">Online</span>
+                </div>
+                <div class="sensor-header">
+                    <span class="sensor-label">🛰️ Database</span>
+                    <span id="dbStatus" style="font-size: 0.9rem; font-weight: 700;">Connecting...</span>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    // Pastikan Config ini sesuai dengan akun Firebase Anda
+    const firebaseConfig = {
+        apiKey: "AIzaSyDUUYsYskvAeS3yC3Ij5OvjNLqIBxd5Jmc",
+        authDomain: "deteksi-body.firebaseapp.com",
+        databaseURL: "https://deteksi-body-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "deteksi-body"
+    };
+    
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const updateTime = () => new Date().toLocaleString("id-ID",{hour: '2-digit', minute:'2-digit', second:'2-digit'});
+
+    // RTDB Connection Status Check
+    onValue(ref(db, ".info/connected"), (snap) => {
+        const dbStatus = document.getElementById("dbStatus");
+        if (snap.val() === true) {
+            dbStatus.textContent = "Connected";
+            dbStatus.style.color = "#4dff88";
+        } else {
+            dbStatus.textContent = "Disconnected";
+            dbStatus.style.color = "#ff4d4d";
+        }
+    });
+
+    // 1. SENSOR WADAH (Path:Kaleng)
+    onValue(ref(db, "Monitoring_Wadah/status"), (snapshot)=>{
+        const val = snapshot.val();
+        const el = document.getElementById("kalengStatus");
+        if (val !== null) {
+            el.textContent = val ? "Terdeteksi" : "Kosong";
+            el.className = val ? "sensor-value status-safe" : "sensor-value status-danger";
+        }
+        document.getElementById("timestamp").textContent = updateTime();
+    });
+
+    // Helper UI untuk Progress Bar
+    const updateTonerUI = (val, valId, barId) => {
+        const percent = (val !== null) ? val : 0;
+        const el = document.getElementById(valId);
+        const bar = document.getElementById(barId);
+        
+        el.textContent = percent + "%";
+        bar.style.width = percent + "%";
+
+        // Ganti warna bar berdasarkan level
+        if(percent < 20) { el.className = "sensor-value status-danger"; bar.style.backgroundColor = "#ff4d4d"; }
+        else if(percent < 50) { el.className = "sensor-value status-warning"; bar.style.backgroundColor = "#ffcc4d"; }
+        else { el.className = "sensor-value status-safe"; bar.style.backgroundColor = "#4dff88"; }
+    };
+
+    // Daftar inisial warna toner sesuai keinginanmu
+    const colors = ['R', 'G', 'B', 'Bl', 'W', 'Y'];
+
+    // Listeners untuk 6 Toner berdasarkan inisial warna
+    colors.forEach((col) => {
+        onValue(ref(db, `Monitoring/${col}`), (snapshot) => {
+            const val = snapshot.val();
+            const percent = (val !== null) ? val : 0;
+            
+            // Kita tetap pakai id vol1, bar1 agar tidak perlu ubah HTML-nya banyak-banyak
+            // Mapping: R=1, G=2, B=3, Bl=4, W=5, Y=6
+            const index = colors.indexOf(col) + 1;
+            updateTonerUI(percent, `vol${index}`, `bar${index}`);
+            
+            document.getElementById("timestamp").textContent = updateTime();
+        });
+    });
+
+    // Status Browser Online/Offline
+    window.addEventListener('online', () => {
+        const s = document.getElementById("koneksiStatus");
+        s.textContent = "Online"; s.className = "sensor-value status-safe";
+    });
+    window.addEventListener('offline', () => {
+        const s = document.getElementById("koneksiStatus");
+        s.textContent = "Offline"; s.className = "sensor-value status-danger";
+    });
+</script>
+
+{% include 'footer.html' %}
+</body>
+</html>

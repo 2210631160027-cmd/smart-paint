@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>SmartPaint</title>
+
+    <style>
+      /* ===== HOME LAYOUT ===== */
+  .home-container {
+  min-height: calc(60vh - 10px); /* tinggi navbar */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  padding: 5px 100px 60px; /* atas diperkecil */
+  gap: 30px;
+}
+
+
+      /* ===== KIRI (GAMBAR) ===== */
+      .home-image {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .home-image img {
+        max-width: 100%;
+        max-height: 420px;
+        object-fit: contain;
+      }
+
+      /* ===== KANAN (DESKRIPSI) ===== */
+      .home-content {
+      color: #ffffff;     /* sama persis kayak judul */
+      }
+
+      .home-content p {
+      color: #ffffff;     /* paksa putih solid */
+      text-align: justify;
+      opacity: 1;         /* 🔑 HILANGKAN efek pudar */
+      line-height: 1.8;
+      font-weight: 400;   /* biar beda dikit sama h1 */
+      }
+      /* ===== BUTTON LOGIN ===== */
+    .login-btn {
+    margin-top: 28px;
+    display: inline-flex;
+    width: 140px;          /* 🔑 ATUR LEBAR */
+    text-align: center;   /* teks ke tengah */
+    padding: 2px 0;       /* tinggi tombol */
+    background: linear-gradient(135deg, #2631c5, #2195f5);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 20px;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: 0.3s ease;
+  }
+
+      .login-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(0,102,255,0.35);
+      }
+
+      /* ===== RESPONSIVE ===== */
+      @media (max-width: 900px) {
+        .home-container {
+          grid-template-columns: 1fr;
+          text-align: center;
+          padding: 60px 30px;
+        }
+      }
+    </style>
+  </head>
+
+  <body class="home-page">
+
+    {% include 'navbar_public.html' %}
+
+    <main>
+      <div class="home-container">
+
+        <!-- SISI KIRI -->
+        <div class="home-image">
+          <!-- GANTI NAMA FILE SESUAI GAMBAR DESAIN SMARTPAINT -->
+          <img src="{{ url_for('static', filename='images/SmartPaint.png') }}" alt="Desain SmartPaint">
+        </div>
+
+        <!-- SISI KANAN -->
+        <div class="home-content">
+          <h1>SmartPaint</h1>
+          <p>
+            SmartPaint merupakan alat pencampur cat otomatis 
+            untuk aplikasi pada kendaraan otomotif berbasis pengolahan citra.
+          </p>
+          <p>
+            SmartPaint mengintegrasikan kamera, pengolahan citra, kendali otomatis serta
+            antarmuka web untuk mengambil warna sampel dan memantau volume isi setiap toner warna.
+            Smartpaint dikembangkan oleh tim Tugas Akhir kelompok 22.19 guna menjawab masalah tentang pencampuran cat
+            yang masih menggunakan tenaga manual, khususnya pada toko cat untuk repaint kendaraan otomotif.
+          </p>
+
+          <a href="/login" class="login-btn">Login</a>
+        </div>
+
+      </div>
+    </main>
+
+    {% include 'footer.html' %}
+
+    <script src="{{ url_for('static', filename='scripts.js') }}" type="module"></script>
+  </body>
+</html>
