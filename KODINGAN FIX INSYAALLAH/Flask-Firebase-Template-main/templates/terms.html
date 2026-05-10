@@ -1,35 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
+<html lang="id">
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/default_logo.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-
-  <title>Flask Template</title>
-
-
-  </head>
-
-  <body>
-
+  <title>Terms of Service - SmartPaint</title>
+  <style>
+    body { background: var(--off-white); }
+    main { align-items: flex-start; justify-content: center; }
+  </style>
+</head>
+<body>
+  {% if session.get('user') %}
+    {% include 'navbar_private.html' %}
+  {% else %}
     {% include 'navbar_public.html' %}
-
-    <main>
-
+  {% endif %}
+  <main>
+    <div class="content-page">
       <h1>Terms of Service</h1>
-
-      <p>Insert your app's Terms of Service here.</p>
-
-    </main>
-
-    {% include 'footer.html' %}
-
-
-
-    <script src="{{ url_for('static', filename='scripts.js') }}" type="module"></script>
-  </body>
-
+      <h2>1. Penerimaan Ketentuan</h2>
+      <p>Dengan mengakses dan menggunakan aplikasi web SmartPaint ("Layanan"), Anda menyetujui untuk terikat oleh Syarat dan Ketentuan ini. Jika Anda tidak menyetujui ketentuan ini, harap tidak menggunakan Layanan kami.</p>
+      <h2>2. Deskripsi Layanan</h2>
+      <p>SmartPaint adalah sistem pencampur cat otomatis berbasis pengolahan citra digital yang dikembangkan sebagai proyek Tugas Akhir oleh mahasiswa Teknik Elektro Universitas Singaperbangsa Karawang. Layanan ini menyediakan fitur deteksi warna melalui kamera, perhitungan komposisi campuran cat, monitoring volume toner, dan kontrol perangkat melalui protokol MQTT.</p>
+      <h2>3. Akun Pengguna</h2>
+      <p>Untuk mengakses fitur-fitur tertentu, Anda perlu membuat akun menggunakan email atau akun Google. Anda bertanggung jawab untuk menjaga kerahasiaan kredensial akun Anda dan seluruh aktivitas yang terjadi di bawah akun tersebut.</p>
+      <h2>4. Penggunaan yang Diperbolehkan</h2>
+      <ul><li>Menggunakan Layanan sesuai dengan tujuan yang dimaksudkan, yaitu pencampuran cat otomatis untuk kendaraan otomotif.</li><li>Mengakses fitur deteksi warna, monitoring, dan riwayat pencampuran melalui antarmuka yang disediakan.</li><li>Menggunakan Layanan untuk keperluan pribadi, akademik, atau riset non-komersial.</li></ul>
+      <h2>5. Penggunaan yang Dilarang</h2>
+      <ul><li>Menyalahgunakan akses ke sistem kontrol perangkat keras (ESP32/MQTT) untuk tujuan yang merugikan.</li><li>Mencoba mengakses data pengguna lain tanpa izin.</li><li>Memodifikasi, mendistribusikan ulang, atau merekayasa balik kode sumber Layanan tanpa persetujuan tertulis.</li><li>Menggunakan Layanan untuk aktivitas ilegal atau melanggar hukum.</li></ul>
+      <h2>6. Batasan Tanggung Jawab</h2>
+      <p>SmartPaint disediakan "sebagaimana adanya" (as is). Tim pengembang tidak memberikan jaminan atas keakuratan hasil deteksi warna dan komposisi campuran. Pengguna bertanggung jawab penuh atas penggunaan hasil deteksi dalam aplikasi nyata.</p>
+      <h2>7. Hak Kekayaan Intelektual</h2>
+      <p>Seluruh konten, desain, kode, dan algoritma yang terdapat dalam SmartPaint adalah milik tim pengembang dan dilindungi oleh hukum hak cipta yang berlaku.</p>
+      <h2>8. Perubahan Ketentuan</h2>
+      <p>Tim pengembang berhak mengubah Syarat dan Ketentuan ini sewaktu-waktu. Perubahan akan berlaku efektif setelah dipublikasikan melalui Layanan.</p>
+      <h2>9. Kontak</h2>
+      <p>Jika Anda memiliki pertanyaan mengenai Syarat dan Ketentuan ini, silakan hubungi tim pengembang melalui email yang terdaftar di halaman About.</p>
+      <p style="margin-top:32px;font-size:0.8rem;color:var(--gray-400);">Terakhir diperbarui: Mei 2026</p>
+    </div>
+  </main>
+  {% include 'footer.html' %}
+</body>
 </html>

@@ -37,7 +37,7 @@ app.config['SESSION_REFRESH_EACH_REQUEST'] = True
 # -------------------------------
 # Firebase Setup
 # -------------------------------
-cred = credentials.Certificate(r"C:\Users\LENOVO\OneDrive\Documents\TEKNIK ELEKTRO 22\TUGAS AKHIR\KODINGAN FIX INSYAALLAH\KODINGAN FIX INSYAALLAH\Flask-Firebase-Template-main\firebase-auth.json")
+cred = credentials.Certificate("firebase-auth.json")
 if not firebase_admin._apps:
     firebase_admin.initialize_app(cred, {
         "databaseURL": "https://deteksi-body-default-rtdb.asia-southeast1.firebasedatabase.app/"
@@ -89,7 +89,7 @@ def authorize():
         return jsonify({"error": "Token tidak ditemukan"}), 400
 
     try:
-        decoded_token = auth.verify_id_token(id_token)
+        decoded_token = auth.verify_id_token(id_token, clock_skew_seconds=60)
         user_email = decoded_token.get("email").lower().strip()
 
         print("LOGIN EMAIL:", user_email)

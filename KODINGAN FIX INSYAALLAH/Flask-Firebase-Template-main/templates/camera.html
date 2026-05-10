@@ -1,148 +1,43 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Identifikasi Warna</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/default_logo.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <title>Identifikasi Warna - SmartPaint</title>
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #cce6f4;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .camera-container {
-      position: relative;
-      width: 90vw;
-      max-width: 500px;
-      aspect-ratio: 3/4;
-      overflow: hidden;
-      border-radius: 10px;
-      background: black;
-    }
-
-    video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transform-origin: center center;
-    }
-
-    /* Garis midpoint */
-    .crosshair {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-    }
-
-    .crosshair::before,
-    .crosshair::after {
-      content: "";
-      position: absolute;
-      background: rgba(0, 255, 0, 0.7);
-    }
-
-    .crosshair::before {
-      top: 50%;
-      left: 0;
-      width: 100%;
-      height: 1px;
-    }
-
-    .crosshair::after {
-      left: 50%;
-      top: 0;
-      height: 100%;
-      width: 1px;
-    }
-
-    #zoomControl {
-      margin-top: 10px;
-      width: 80%;
-    }
-
-    button {
-      margin-top: 15px;
-      padding: 10px 20px;
-      background: #333;
-      color: white;
-      border: none;
-      border-radius: 5px;
-    }
+    main { flex-direction: column; gap: 16px; background: var(--off-white); }
+    h2 { color: var(--navy); }
+    .camera-container { position:relative; width:90vw; max-width:500px; aspect-ratio:3/4; overflow:hidden; border-radius:var(--radius-md); background:#000; border:1px solid var(--gray-100); box-shadow:var(--shadow-md); }
+    .camera-container video { width:100%; height:100%; object-fit:cover; }
+    .crosshair { position:absolute; top:0;left:0; width:100%; height:100%; pointer-events:none; }
+    .crosshair::before,.crosshair::after { content:""; position:absolute; background:rgba(61,90,241,0.5); }
+    .crosshair::before { top:50%;left:0;width:100%;height:1px; }
+    .crosshair::after { left:50%;top:0;height:100%;width:1px; }
+    #zoomControl { width:80%; accent-color:var(--accent); }
+    .camera-btn { padding:13px 32px; background:var(--navy); color:var(--white); border:none; border-radius:var(--radius-sm); font-family:var(--font); font-weight:600; cursor:pointer; font-size:0.95rem; width:auto; transition:all var(--transition); }
+    .camera-btn:hover { background:var(--navy-light); box-shadow:var(--shadow-md); }
+    #colorResult { color:var(--gray-600); font-size:0.9rem; }
   </style>
 </head>
 <body>
-  <h2>Identifikasi Warna</h2>
-
-  <div class="camera-container">
-    <video id="camera" autoplay playsinline></video>
-    <div class="crosshair"></div>
-  </div>
-
-  <input type="range" id="zoomControl" min="1" max="5" step="0.1" value="1">
-  <button id="detectBtn">IDENTIFIKASI</button>
-
-  <canvas id="canvas" hidden></canvas>
-
-  <p id="colorResult">Warna saat ini: -</p>
-
+  {% include 'navbar_private.html' %}
+  <main>
+    <h2>Identifikasi Warna</h2>
+    <div class="camera-container"><video id="camera" autoplay playsinline></video><div class="crosshair"></div></div>
+    <input type="range" id="zoomControl" min="1" max="5" step="0.1" value="1">
+    <button id="detectBtn" class="camera-btn">IDENTIFIKASI</button>
+    <canvas id="canvas" hidden></canvas>
+    <p id="colorResult">Warna saat ini: -</p>
+  </main>
   <script>
-    const video = document.getElementById('camera');
-    const canvas = document.getElementById('canvas');
-    const zoomControl = document.getElementById('zoomControl');
-    const detectBtn = document.getElementById('detectBtn');
-    const colorResult = document.getElementById('colorResult');
-
-    let track;
-
-    async function startCamera() {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
-      });
-      video.srcObject = stream;
-      track = stream.getVideoTracks()[0];
-
-      // Cek apakah kamera support zoom
-      const capabilities = track.getCapabilities();
-      if (capabilities.zoom) {
-        zoomControl.min = capabilities.zoom.min;
-        zoomControl.max = capabilities.zoom.max;
-        zoomControl.step = capabilities.zoom.step || 0.1;
-        zoomControl.value = track.getSettings().zoom || 1;
-      } else {
-        zoomControl.style.display = 'none';
-      }
-    }
-
-    // Fungsi ubah zoom kamera
-    zoomControl.addEventListener('input', async () => {
-      const constraints = { advanced: [{ zoom: zoomControl.value }] };
-      await track.applyConstraints(constraints);
-    });
-
-    // Fungsi deteksi warna di tengah layar
-    detectBtn.addEventListener('click', () => {
-      const ctx = canvas.getContext('2d');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      const x = canvas.width / 2;
-      const y = canvas.height / 2;
-      const pixel = ctx.getImageData(x, y, 1, 1).data;
-
-      const [r, g, b] = pixel;
-      const hex = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
-      colorResult.textContent = `Warna saat ini: ${hex} (R:${r}, G:${g}, B:${b})`;
-    });
-
+    const video=document.getElementById('camera'),canvas=document.getElementById('canvas'),zoomControl=document.getElementById('zoomControl'),detectBtn=document.getElementById('detectBtn'),colorResult=document.getElementById('colorResult');let track;
+    async function startCamera(){const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});video.srcObject=stream;track=stream.getVideoTracks()[0];const cap=track.getCapabilities();if(cap.zoom){zoomControl.min=cap.zoom.min;zoomControl.max=cap.zoom.max;zoomControl.step=cap.zoom.step||0.1;zoomControl.value=track.getSettings().zoom||1;}else{zoomControl.style.display='none';}}
+    zoomControl.addEventListener('input',async()=>{await track.applyConstraints({advanced:[{zoom:zoomControl.value}]});});
+    detectBtn.addEventListener('click',()=>{const ctx=canvas.getContext('2d');canvas.width=video.videoWidth;canvas.height=video.videoHeight;ctx.drawImage(video,0,0,canvas.width,canvas.height);const x=canvas.width/2,y=canvas.height/2,pixel=ctx.getImageData(x,y,1,1).data,[r,g,b]=pixel;const hex=`#${r.toString(16).padStart(2,"0")}${g.toString(16).padStart(2,"0")}${b.toString(16).padStart(2,"0")}`;colorResult.textContent=`Warna saat ini: ${hex} (R:${r}, G:${g}, B:${b})`;});
     startCamera();
   </script>
+  {% include 'footer.html' %}
 </body>
 </html>

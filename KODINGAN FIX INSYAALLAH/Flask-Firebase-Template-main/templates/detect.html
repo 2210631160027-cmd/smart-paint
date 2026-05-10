@@ -1,67 +1,263 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="utf-8" />
-  <title>SmartPaint | Deteksi Warna</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/default_logo.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-
+  <title>Deteksi Warna - SmartPaint</title>
   <style>
-    html, body { margin: 0; padding: 0; min-height: 100vh; background-color: #0b0f1a; font-family: 'Poppins', sans-serif; color: white; overflow-x: hidden; }
-    body { display: flex; flex-direction: column; background: linear-gradient(135deg, #0b0f1a 0%, #0f172a 40%, #0a3cff 100%); background-attachment: fixed; }
-    main { flex: 1 0 auto; padding: 8rem 1rem 4rem; display: flex; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; }
-    .glass-box { position: relative; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-radius: 24px; width: 100%; max-width: 1000px; padding: 25px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
-    
-    /* OVERLAY LOCK & LOADING */
-    #lockOverlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(11, 15, 26, 0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 100; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; border-radius: 24px; padding: 20px; }
-    .lock-icon { font-size: 4rem; margin-bottom: 15px; transition: all 0.3s ease; }
-    .lock-text { font-weight: 700; color: #ff4d4d; font-size: 1.3rem; margin-bottom: 5px; }
-    
-    /* ANIMATIONS */
-    .spin { animation: spin 2s linear infinite; display: inline-block; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .pulse { animation: pulse 1.5s ease-in-out infinite; display: inline-block; }
-    @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.7; } }
+    main {
+      flex-direction: column;
+      padding: 90px 24px 60px;
+      background: var(--off-white);
+    }
 
-    h2 { text-align: center; margin: 0 0 25px 0; background: linear-gradient(to right, #ffffff, #4d7cff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; font-size: 1.8rem; }
-    .detection-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 25px; }
-    #videoBox { position: relative; width: 100%; border-radius: 18px; overflow: hidden; border: 2px solid rgba(255, 255, 255, 0.1); background: #000; aspect-ratio: 4 / 3; }
-    video { width: 100%; height: 100%; object-fit: cover; }
-    canvas.overlay { position: absolute; left: 0; top: 0; pointer-events: none; }
-    .controls-panel { display: flex; flex-direction: column; gap: 15px; }
-    select, button { width: 100%; padding: 14px; border-radius: 12px; font-family: inherit; font-weight: 600; border: none; outline: none; }
-    select { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 255, 255, 0.2); }
-    option { background: #0f172a; }
-    .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    #btnCapture { background: white; color: #111; cursor: pointer; }
-    #btnSend { background: #0a3cff; color: white; cursor: pointer; }
-    #btnSend:disabled { background: #1e293b; color: #64748b; opacity: 0.6; cursor: not-allowed; }
-    #colorPreview { width: 100%; height: 45px; border-radius: 12px; border: 2px solid rgba(255, 255, 255, 0.2); }
-    #info { background: rgba(0, 0, 0, 0.3); padding: 15px; border-radius: 12px; font-size: 0.85rem; border-left: 4px solid #4d7cff; color: #cbd5e1; white-space: pre-wrap; margin: 0; }
-    .img-result { width: 100%; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 15px; }
-    @media (max-width: 850px) { .detection-grid { grid-template-columns: 1fr; } #videoBox { aspect-ratio: 1 / 1; } }
+    .detect-title {
+      text-align: center;
+      margin-bottom: 28px;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--navy);
+    }
+
+    .glass-box {
+      box-shadow: var(--shadow-xl);
+      max-width: 1000px;
+      background: var(--white);
+      border-radius: var(--radius-xl);
+    }
+
+    #lockOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.96);
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      border-radius: var(--radius-xl);
+      padding: 24px;
+    }
+
+    .lock-icon {
+      font-size: 2rem;
+      margin-bottom: 16px;
+      font-weight: 800;
+      color: var(--navy);
+    }
+
+    .lock-text {
+      font-weight: 700;
+      color: var(--danger);
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+
+    .spin {
+      animation: spin 2s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg)
+      }
+
+      100% {
+        transform: rotate(360deg)
+      }
+    }
+
+    .pulse {
+      animation: pulse 1.5s ease-in-out infinite;
+      display: inline-block;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1
+      }
+
+      50% {
+        transform: scale(1.15);
+        opacity: 0.7
+      }
+    }
+
+    .detection-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 24px;
+    }
+
+    #videoBox {
+      position: relative;
+      width: 100%;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 1px solid var(--gray-100);
+      background: #000;
+      aspect-ratio: 4/3;
+    }
+
+    #videoBox video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    canvas.overlay {
+      position: absolute;
+      left: 0;
+      top: 0;
+      pointer-events: none;
+    }
+
+    .controls-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .controls-panel select {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-weight: 500;
+      border: 1.5px solid var(--gray-100);
+      background: var(--gray-50);
+      color: var(--gray-800);
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .controls-panel select:focus {
+      border-color: var(--accent);
+    }
+
+    .controls-panel select option {
+      background: var(--white);
+    }
+
+    .btn-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .btn-group button {
+      padding: 14px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: all var(--transition);
+    }
+
+    #btnCapture {
+      background: var(--gray-50);
+      color: var(--navy);
+      border: 1.5px solid var(--gray-100);
+    }
+
+    #btnCapture:hover {
+      background: var(--gray-100);
+    }
+
+    #btnSend {
+      background: var(--navy);
+      color: var(--white);
+    }
+
+    #btnSend:hover {
+      background: var(--navy-light);
+    }
+
+    #btnSend:disabled {
+      background: var(--gray-100);
+      color: var(--gray-400);
+      cursor: not-allowed;
+    }
+
+    #colorPreview {
+      width: 100%;
+      height: 44px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--gray-100);
+    }
+
+    #info {
+      background: var(--gray-50);
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      border-left: 3px solid var(--accent);
+      color: var(--gray-600);
+      white-space: pre-wrap;
+      margin: 0;
+      font-family: var(--font);
+    }
+
+    .img-result {
+      width: 100%;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--gray-100);
+      margin-bottom: 12px;
+    }
+
+    #btnBypass {
+      background: var(--gray-50);
+      border: 1.5px solid var(--gray-100);
+      color: var(--gray-400);
+      width: auto;
+      padding: 8px 16px;
+      font-size: 0.75rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-family: var(--font);
+    }
+
+    @media(max-width:850px) {
+      .detection-grid {
+        grid-template-columns: 1fr;
+      }
+
+      #videoBox {
+        aspect-ratio: 1/1;
+      }
+    }
   </style>
 </head>
+
 <body>
   {% include 'navbar_private.html' %}
   <main>
     <div class="glass-box">
       <div id="lockOverlay">
-          <div class="lock-icon" id="statusIcon">🔒</div>
-          <div class="lock-text" id="statusText">WADAH TIDAK TERDETEKSI</div>
-          <p id="statusDesc" style="color: #94a3b8; margin-bottom: 20px;">Letakkan wadah kaleng untuk memulai deteksi.</p>
-          <button id="btnBypass" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; width: auto; padding: 8px 16px; font-size: 0.75rem; border-radius: 8px; cursor: pointer;">
-            🔓 Manual Bypass (Gunakan jika wadah belum permanen)
-          </button>
+        <div class="lock-icon" id="statusIcon">LOCKED</div>
+        <div class="lock-text" id="statusText">WADAH TIDAK TERDETEKSI</div>
+        <p id="statusDesc" style="color:var(--gray-400);margin-bottom:20px;">Letakkan wadah kaleng untuk memulai
+          deteksi.</p>
+        <button id="btnBypass">Manual Bypass</button>
       </div>
-      <h2>🎨 Deteksi Warna Midpoint</h2>
+      <h2 class="detect-title">Deteksi Warna</h2>
       <div class="detection-grid">
         <div class="camera-section">
-          <div id="videoBox">
-            <video id="video" autoplay playsinline></video>
-            <canvas class="overlay" id="overlay"></canvas>
-          </div>
+          <div id="videoBox"><video id="video" autoplay playsinline></video><canvas class="overlay"
+              id="overlay"></canvas></div>
         </div>
         <div class="controls-panel">
           <select id="kapasitasSelect">
@@ -69,184 +265,34 @@
             <option value="500">500 ml</option>
             <option value="1000">1000 ml</option>
           </select>
-          <div class="btn-group">
-            <button id="btnCapture">📸 Ambil</button>
-            <button id="btnSend" disabled>⬆️ Kirim</button>
+          <div class="btn-group"><button id="btnCapture">Ambil</button><button id="btnSend" disabled>Kirim</button>
           </div>
           <div id="colorPreview"></div>
           <pre id="info">Menunggu wadah kaleng...</pre>
-          <div class="preview-results">
-            <img id="capturedPreview" class="img-result" src="" />
-            <img id="serverRGB" class="img-result" src="" />
-          </div>
+          <div class="preview-results"><img id="capturedPreview" class="img-result" src="" /><img id="serverRGB"
+              class="img-result" src="" /></div>
         </div>
       </div>
     </div>
   </main>
   <canvas id="canvas" style="display:none;"></canvas>
-
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyDUUYsYskvAeS3yC3Ij5OvjNLqIBxd5Jmc",
-        authDomain: "deteksi-body.firebaseapp.com",
-        databaseURL: "https://deteksi-body-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "deteksi-body"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    const video = document.getElementById("video");
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
-    const overlay = document.getElementById("overlay");
-    const ctxOverlay = overlay.getContext("2d");
-    const lockOverlay = document.getElementById("lockOverlay");
-    const statusIcon = document.getElementById("statusIcon");
-    const statusText = document.getElementById("statusText");
-    const statusDesc = document.getElementById("statusDesc");
-    const btnCapture = document.getElementById("btnCapture");
-    const btnSend = document.getElementById("btnSend");
-    const info = document.getElementById("info");
-    const preview = document.getElementById("capturedPreview");
-    const colorPreview = document.getElementById("colorPreview");
-    const btnBypass = document.getElementById("btnBypass");
-
-    let isKalengReady = false;
-    let isManualBypass = false;
-    let isProcessing = false;
-    let lastCapturedBlob = null;
-
-    function checkAccess() {
-        if (isProcessing) return; // Jangan ganggu jika sedang proses
-        if (isKalengReady === true || isKalengReady === 1 || isManualBypass) {
-            lockOverlay.style.display = "none";
-            btnCapture.disabled = false;
-            info.textContent = isManualBypass ? "Sistem Siap (Mode Manual)." : "Sistem Siap. Silakan ambil gambar.";
-        } else {
-            lockOverlay.style.display = "flex";
-            statusIcon.textContent = "🔒";
-            statusIcon.className = "lock-icon";
-            statusText.textContent = "WADAH TIDAK TERDETEKSI";
-            statusText.style.color = "#ff4d4d";
-            btnCapture.disabled = true;
-            btnSend.disabled = true;
-            info.textContent = "⚠️ Wadah tidak terdeteksi!";
-        }
-    }
-
-    onValue(ref(db, "Monitoring_Wadah/status"), (snapshot) => {
-        isKalengReady = snapshot.val();
-        checkAccess();
-    });
-
-    btnBypass.onclick = () => {
-        if (confirm("Gembok akan dibuka paksa (Mode Manual). Lanjutkan?")) {
-            isManualBypass = true;
-            checkAccess();
-        }
-    };
-
-    async function startCamera() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" } },
-          audio: false
-        });
-        video.srcObject = stream;
-      } catch (err) { alert("Kamera error: " + err.message); }
-    }
-
-    function drawMidpoint() {
-      overlay.width = video.clientWidth;
-      overlay.height = video.clientHeight;
-      ctxOverlay.clearRect(0, 0, overlay.width, overlay.height);
-      const cx = overlay.width / 2; const cy = overlay.height / 2;
-      ctxOverlay.beginPath();
-      ctxOverlay.arc(cx, cy, 12, 0, Math.PI * 2);
-      ctxOverlay.strokeStyle = "#4d7cff"; ctxOverlay.lineWidth = 3;
-      ctxOverlay.stroke();
-    }
-
-    video.addEventListener("loadedmetadata", drawMidpoint);
-    window.addEventListener("resize", drawMidpoint);
-    startCamera();
-
-    btnCapture.onclick = async () => {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const pixel = ctx.getImageData(canvas.width/2, canvas.height/2, 1, 1).data;
-      const [r, g, b] = pixel;
-      lastCapturedBlob = await new Promise(res => canvas.toBlob(res, "image/jpeg", 0.9));
-      preview.src = URL.createObjectURL(lastCapturedBlob);
-      colorPreview.style.background = `rgb(${r},${g},${b})`;
-      btnSend.disabled = false;
-      info.textContent = `✅ Terdeteksi!\nRGB: ${r},${g},${b}`;
-    };
-
-    btnSend.onclick = async () => {
-      const cap = document.getElementById("kapasitasSelect").value;
-      if (!cap) return alert("Pilih kapasitas!");
-
-      isProcessing = true;
-      let totalTime = (cap === "500") ? 24 : 36;
-      let mixingTime = 10;
-
-      lockOverlay.style.display = "flex";
-      statusIcon.textContent = "⚙️";
-      statusIcon.className = "lock-icon spin";
-      statusText.textContent = "PROSES PENCAMPURAN...";
-      statusText.style.color = "#4d7cff";
-      btnBypass.style.display = "none";
-      btnSend.disabled = true;
-
-      try {
-        const formData = new FormData();
-        formData.append("file", lastCapturedBlob, "capture.jpg");
-        formData.append("capacity", cap);
-
-        const res = await fetch("/upload", { method: "POST", body: formData });
-        const data = await res.json();
-
-        await fetch("/mqtt_publish", {
-          method: "POST",
-          headers: {"Content-Type":"application/json"},
-          body: JSON.stringify(data.mix_ml)
-        });
-
-        let timeLeft = totalTime;
-        const timerInterval = setInterval(() => {
-            timeLeft--;
-            if (timeLeft > mixingTime) {
-                statusIcon.textContent = "💧";
-                statusIcon.className = "lock-icon pulse";
-                statusDesc.innerHTML = `Meneteskan Warna Dasar...<br><b style="font-size:1.5rem; color:white;">${timeLeft - mixingTime}s</b>`;
-            } else if (timeLeft > 0) {
-                statusIcon.textContent = "🌪️";
-                statusIcon.className = "lock-icon spin";
-                statusDesc.innerHTML = `Proses Pengadukan Campuran...<br><b style="font-size:1.5rem; color:white;">${timeLeft}s</b>`;
-            } else {
-                clearInterval(timerInterval);
-                isProcessing = false;
-                alert("✅ Selesai! Cat telah tercampur sempurna.");
-                btnBypass.style.display = "block";
-                checkAccess();
-                if (data.rgb_path) document.getElementById("serverRGB").src = data.rgb_path;
-                info.textContent = `✅ Berhasil!\nRGB: ${data.rgb}`;
-            }
-        }, 1000);
-
-      } catch (err) { 
-        alert("Gagal mengirim instruksi.");
-        isProcessing = false;
-        btnBypass.style.display = "block";
-        checkAccess();
-      }
-    };
+    const fc = { apiKey: "AIzaSyDUUYsYskvAeS3yC3Ij5OvjNLqIBxd5Jmc", authDomain: "deteksi-body.firebaseapp.com", databaseURL: "https://deteksi-body-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "deteksi-body" };
+    const app = initializeApp(fc), db = getDatabase(app);
+    const video = document.getElementById("video"), canvas = document.getElementById("canvas"), ctx = canvas.getContext("2d"), overlay = document.getElementById("overlay"), ctxO = overlay.getContext("2d"), lockOverlay = document.getElementById("lockOverlay"), statusIcon = document.getElementById("statusIcon"), statusText = document.getElementById("statusText"), statusDesc = document.getElementById("statusDesc"), btnCapture = document.getElementById("btnCapture"), btnSend = document.getElementById("btnSend"), info = document.getElementById("info"), preview = document.getElementById("capturedPreview"), colorPreview = document.getElementById("colorPreview"), btnBypass = document.getElementById("btnBypass");
+    let isKalengReady = false, isManualBypass = false, isProcessing = false, lastCapturedBlob = null;
+    function checkAccess() { if (isProcessing) return; if (isKalengReady === true || isKalengReady === 1 || isManualBypass) { lockOverlay.style.display = "none"; btnCapture.disabled = false; info.textContent = isManualBypass ? "Sistem Siap (Mode Manual)." : "Sistem Siap. Silakan ambil gambar."; } else { lockOverlay.style.display = "flex"; statusIcon.textContent = "LOCKED"; statusIcon.className = "lock-icon"; statusText.textContent = "WADAH TIDAK TERDETEKSI"; statusText.style.color = "var(--danger)"; btnCapture.disabled = true; btnSend.disabled = true; info.textContent = "Wadah tidak terdeteksi!"; } }
+    onValue(ref(db, "Monitoring_Wadah/status"), (s) => { isKalengReady = s.val(); checkAccess(); });
+    btnBypass.onclick = () => { showConfirm("Konfirmasi", "Mode Manual akan diaktifkan. Lanjutkan?", () => { isManualBypass = true; checkAccess(); }); };
+    async function startCamera() { try { const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false }); video.srcObject = stream; } catch (err) { alert("Kamera error: " + err.message); } }
+    function drawMidpoint() { overlay.width = video.clientWidth; overlay.height = video.clientHeight; ctxO.clearRect(0, 0, overlay.width, overlay.height); const cx = overlay.width / 2, cy = overlay.height / 2; ctxO.beginPath(); ctxO.arc(cx, cy, 12, 0, Math.PI * 2); ctxO.strokeStyle = "#3D5AF1"; ctxO.lineWidth = 3; ctxO.stroke(); }
+    video.addEventListener("loadedmetadata", drawMidpoint); window.addEventListener("resize", drawMidpoint); startCamera();
+    btnCapture.onclick = async () => { canvas.width = video.videoWidth; canvas.height = video.videoHeight; ctx.drawImage(video, 0, 0, canvas.width, canvas.height); const pixel = ctx.getImageData(canvas.width / 2, canvas.height / 2, 1, 1).data; const [r, g, b] = pixel; lastCapturedBlob = await new Promise(res => canvas.toBlob(res, "image/jpeg", 0.9)); preview.src = URL.createObjectURL(lastCapturedBlob); colorPreview.style.background = `rgb(${r},${g},${b})`; btnSend.disabled = false; info.textContent = `Terdeteksi!\nRGB: ${r},${g},${b}`; };
+    btnSend.onclick = async () => { const cap = document.getElementById("kapasitasSelect").value; if (!cap) return alert("Pilih kapasitas!"); isProcessing = true; let totalTime = (cap === "500") ? 24 : 36, mixingTime = 10; lockOverlay.style.display = "flex"; statusIcon.textContent = "PROCESSING"; statusIcon.className = "lock-icon pulse"; statusText.textContent = "PROSES PENCAMPURAN..."; statusText.style.color = "var(--accent)"; btnBypass.style.display = "none"; btnSend.disabled = true; try { const formData = new FormData(); formData.append("file", lastCapturedBlob, "capture.jpg"); formData.append("capacity", cap); const res = await fetch("/upload", { method: "POST", body: formData }); const data = await res.json(); await fetch("/mqtt_publish", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data.mix_ml) }); let timeLeft = totalTime; const ti = setInterval(() => { timeLeft--; if (timeLeft > mixingTime) { statusIcon.textContent = "DROPPING"; statusIcon.className = "lock-icon pulse"; statusDesc.innerHTML = `Meneteskan Warna...<br><b style="font-size:1.5rem;color:var(--navy);">${timeLeft - mixingTime}s</b>`; } else if (timeLeft > 0) { statusIcon.textContent = "MIXING"; statusIcon.className = "lock-icon pulse"; statusDesc.innerHTML = `Pengadukan...<br><b style="font-size:1.5rem;color:var(--navy);">${timeLeft}s</b>`; } else { clearInterval(ti); isProcessing = false; alert("Selesai! Cat telah tercampur."); btnBypass.style.display = "block"; checkAccess(); if (data.rgb_path) document.getElementById("serverRGB").src = data.rgb_path; info.textContent = `Berhasil!\nRGB: ${data.rgb}`; } }, 1000); } catch (err) { alert("Gagal mengirim instruksi."); isProcessing = false; btnBypass.style.display = "block"; checkAccess(); } };
   </script>
+  {% include 'footer.html' %}
 </body>
+
 </html>

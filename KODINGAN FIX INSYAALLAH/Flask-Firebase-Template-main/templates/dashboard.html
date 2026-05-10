@@ -1,143 +1,101 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <title>Dashboard - SmartPaint</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/default_logo.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <title>Dashboard - SmartPaint</title>
+  <style>
+    main {
+      flex-direction: column;
+      padding: 72px 48px 60px;
+      background: var(--off-white);
+    }
 
-    <style>
-        /* FIX AREA PUTIH: Pastikan dasar halaman sewarna dengan gradient */
-        html, body {
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            background-color: #0b0f1a; /* Warna gelap agar tidak putih */
-        }
+    .dash-header {
+      text-align: center;
+      margin-bottom: 48px;
+      padding-top: 48px;
+    }
 
-        body {
-            display: flex;
-            flex-direction: column;
-        }
+    .dash-header h1 { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
+    .dash-header p { font-size: 0.95rem; color: var(--gray-400); max-width: 440px; margin: 0 auto; }
 
-        /* FIX MAIN: Pakai flex-grow agar biru memenuhi sisa layar */
-        main {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            padding: 2rem 1rem;
-            background: linear-gradient(135deg, #0b0f1a 0%, #0f172a 40%, #0a3cff 100%);
-        }
+    .dash-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      max-width: 960px;
+      width: 100%;
+    }
 
-        .dashboard-content {
-            text-align: center;
-            margin-bottom: 2rem;
-            color: white;
-        }
+    .dash-card {
+      position: relative;
+      height: 240px;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background-size: cover;
+      background-position: center;
+      border: 1px solid var(--gray-100);
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+    }
 
-        .dashboard-content h1 {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-        }
+    .dash-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-xl);
+    }
 
-        /* FIX BUTTONS: Tetap pakai logika kamu tapi rapi di HP */
-        .dashboard-buttons {
-            display: flex;
-            flex-direction: column; /* Susun ke bawah di HP */
-            width: 100%;
-            max-width: 450px;
-            gap: 15px;
-            margin-top: 20px;
-        }
+    .dash-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(15,27,76,0.85) 0%, rgba(15,27,76,0.2) 100%);
+      z-index: 1;
+    }
 
-        .dashboard-buttons > div {
-            position: relative;
-            height: 160px; /* Tinggi kotak yang pas di layar HP */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-radius: 20px;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            overflow: hidden;
-            transition: transform 0.3s ease;
-        }
+    .dash-card a {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: flex-end;
+      padding: 24px;
+      text-decoration: none;
+      color: var(--white);
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
 
-        /* Overlay gelap agar teks terbaca */
-        .dashboard-buttons > div::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1;
-        }
+    .dash-card a:hover { color: var(--white); }
 
-        /* Link tetap berfungsi penuh */
-        .dashboard-buttons > div a {
-            position: relative;
-            z-index: 2;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-decoration: none;
-            color: #ffffff;
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
+    .dash-card:nth-child(1) { background-image: url("/static/images/Deteksi.jpg"); }
+    .dash-card:nth-child(2) { background-image: url("/static/images/Monitoring.jpg"); }
+    .dash-card:nth-child(3) { background-image: url("/static/images/Histori.webp"); }
 
-        /* Gambar background sesuai folder static kamu */
-        .dashboard-buttons > div:nth-child(1) { background-image: url("/static/images/Deteksi.jpg"); }
-        .dashboard-buttons > div:nth-child(2) { background-image: url("/static/images/Monitoring.jpg"); }
-        .dashboard-buttons > div:nth-child(3) { background-image: url("/static/images/Histori.webp"); }
-
-        /* Responsive: Jika layar lebar (Tablet/Laptop), susun ke samping lagi */
-        @media (min-width: 768px) {
-            .dashboard-buttons {
-                flex-direction: row;
-                max-width: 1000px;
-                height: 350px;
-            }
-            .dashboard-buttons > div {
-                flex: 1;
-                height: 100%;
-            }
-        }
-    </style>
+    @media (max-width: 768px) {
+      main { padding: 72px 20px 40px; }
+      .dash-grid { grid-template-columns: 1fr; max-width: 400px; }
+      .dash-card { height: 180px; }
+    }
+  </style>
 </head>
-
-<body class="dashboard-page">
-    {% include 'navbar_private.html' %}
-
-    <main>
-        <div class="dashboard-content">
-            <h1>Dashboard SmartPaint</h1>
-            <p>Selamat datang di sistem SmartPaint, pilih menu di bawah untuk mulai menggunakan fitur utama</p>
-        </div>
-
-        <div class="dashboard-buttons">
-            <div>
-                <a href="/detect" class="dashboard-btn">Deteksi Warna</a>
-            </div>
-
-            <div>
-                <a href="/monitoring" class="dashboard-btn">Monitoring</a>
-            </div>
-
-            <div>
-                <a href="/history" class="dashboard-btn">History</a>
-            </div>
-        </div>
-    </main>
-
-    <script src="{{ url_for('static', filename='login-auth.js') }}" type="module"></script>
-    <script src="{{ url_for('static', filename='scripts.js') }}" type="module"></script>
+<body>
+  {% include 'navbar_private.html' %}
+  <main>
+    <div class="dash-header">
+      <h1>Dashboard</h1>
+      <p>Pilih menu di bawah untuk mulai menggunakan fitur SmartPaint.</p>
+    </div>
+    <div class="dash-grid">
+      <div class="dash-card"><a href="{{ url_for('detect') }}">Deteksi Warna</a></div>
+      <div class="dash-card"><a href="{{ url_for('monitoring') }}">Monitoring</a></div>
+      <div class="dash-card"><a href="{{ url_for('history') }}">History</a></div>
+    </div>
+  </main>
+  {% include 'footer.html' %}
 </body>
 </html>
