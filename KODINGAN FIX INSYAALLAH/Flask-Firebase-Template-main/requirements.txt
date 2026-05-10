@@ -2,3 +2,7 @@ flask
 firebase_admin
 gunicorn
 python-dotenv
+numpy
+Pillow
+scikit-image
+paho-mqtt
