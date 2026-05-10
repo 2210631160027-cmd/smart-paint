@@ -1,19 +1,34 @@
-<div class="navbar">
-    <img class="logo-img" src="{{ url_for('static', filename='images/default_logo.png') }}" />
-    <span class="hamburger">&#9776;</span> <!-- Hamburger Icon -->
+<nav class="navbar">
+    <a href="{{ url_for('home') }}">
+        <img class="logo-img" src="{{ url_for('static', filename='images/default_logo.png') }}" alt="SmartPaint" />
+    </a>
+    <span class="hamburger">&#9776;</span>
     <div class="navbar-right" id="navbarRight">
         <span class="closebtn">&times;</span>
         <a href="{{ url_for('home') }}">Home</a>
-        <!-- Dropdown for News -->
-        <div class="dropdown">
-            <a class="dropbtn" id="dropBtn">About</a>
-            <div class="dropdown-content">
-                <a href="#news1">About 1</a>
-                <a href="#news2">About 2</a>
-                <a href="#news3">More About</a>
-            </div>
-        </div>
-        <a href="#contact">Contact</a>
         <a href="{{ url_for('login') }}">Login</a>
     </div>
-</div>
+</nav>
+<div class="nav-overlay" id="navOverlay"></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const hamburger = document.querySelector(".hamburger");
+    const navbarRight = document.getElementById("navbarRight");
+    const closebtn = document.querySelector(".closebtn");
+    const overlay = document.getElementById("navOverlay");
+
+    hamburger.addEventListener("click", () => {
+        navbarRight.classList.add("active");
+        overlay.classList.add("active");
+    });
+
+    function closeMenu() {
+        navbarRight.classList.remove("active");
+        overlay.classList.remove("active");
+    }
+
+    closebtn.addEventListener("click", closeMenu);
+    overlay.addEventListener("click", closeMenu);
+});
+</script>

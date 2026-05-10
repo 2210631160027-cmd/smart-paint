@@ -1,35 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
+<html lang="id">
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" >
-
-  <title>Flask Template</title>
-
-
-  </head>
-
-  <body>
-
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/default_logo.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <title>Privacy Policy - SmartPaint</title>
+  <style>
+    body { background: var(--off-white); }
+    main { align-items: flex-start; justify-content: center; }
+  </style>
+</head>
+<body>
+  {% if session.get('user') %}
+    {% include 'navbar_private.html' %}
+  {% else %}
     {% include 'navbar_public.html' %}
-
-    <main>
-
+  {% endif %}
+  <main>
+    <div class="content-page">
       <h1>Privacy Policy</h1>
-
-      <p>Insert your app's privacy policy here.</p>
-
-    </main>
-
-    {% include 'footer.html' %}
-
-
-
-    <script src="{{ url_for('static', filename='scripts.js') }}" type="module"></script>
-  </body>
-
+      <h2>1. Informasi yang Kami Kumpulkan</h2>
+      <p>Saat menggunakan SmartPaint, kami dapat mengumpulkan informasi berikut:</p>
+      <ul><li><strong>Data Akun:</strong> Alamat email dan identitas pengguna melalui autentikasi Firebase.</li><li><strong>Data Deteksi Warna:</strong> Gambar, nilai RGB dan LAB, komposisi campuran cat, serta waktu deteksi.</li><li><strong>Data Monitoring:</strong> Status wadah cat dan volume toner dari sensor perangkat keras secara real-time.</li></ul>
+      <h2>2. Penggunaan Informasi</h2>
+      <p>Informasi yang kami kumpulkan digunakan untuk:</p>
+      <ul><li>Menyediakan dan memelihara fungsionalitas Layanan SmartPaint.</li><li>Menyimpan riwayat deteksi warna untuk akses kembali.</li><li>Mengirimkan perintah pencampuran ke perangkat keras melalui MQTT.</li><li>Meningkatkan akurasi dan performa sistem.</li></ul>
+      <h2>3. Penyimpanan Data</h2>
+      <p>Data disimpan menggunakan Google Firebase (Firestore dan Realtime Database). Gambar hasil deteksi disimpan secara lokal di server aplikasi.</p>
+      <h2>4. Keamanan Data</h2>
+      <ul><li>Autentikasi pengguna melalui Firebase Authentication.</li><li>Session cookie yang aman (Secure, HttpOnly, SameSite).</li><li>Pembatasan akses berdasarkan whitelist email.</li><li>Komunikasi MQTT terenkripsi melalui TLS/SSL.</li></ul>
+      <h2>5. Berbagi Data</h2>
+      <p>Kami tidak menjual atau menyewakan data pribadi Anda kepada pihak ketiga. Data hanya dibagikan jika diwajibkan oleh hukum atau untuk keperluan riset akademik dengan persetujuan.</p>
+      <h2>6. Hak Pengguna</h2>
+      <ul><li>Mengakses data pribadi yang kami simpan.</li><li>Meminta penghapusan akun dan data terkait.</li><li>Menolak pengumpulan data dengan tidak menggunakan Layanan.</li></ul>
+      <h2>7. Cookie dan Session</h2>
+      <p>SmartPaint menggunakan session cookie untuk mengelola autentikasi. Cookie bersifat sesi dan dihapus saat logout. Kami tidak menggunakan cookie pelacakan pihak ketiga.</p>
+      <h2>8. Perubahan Kebijakan</h2>
+      <p>Kami berhak memperbarui Kebijakan Privasi ini sewaktu-waktu melalui halaman ini.</p>
+      <h2>9. Kontak</h2>
+      <p>Untuk pertanyaan, silakan hubungi tim pengembang melalui halaman About.</p>
+      <p style="margin-top:32px;font-size:0.8rem;color:var(--gray-400);">Terakhir diperbarui: Mei 2026</p>
+    </div>
+  </main>
+  {% include 'footer.html' %}
+</body>
 </html>

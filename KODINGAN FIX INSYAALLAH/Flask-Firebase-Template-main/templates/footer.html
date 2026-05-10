@@ -1,10 +1,94 @@
 <footer>
     <div class="simple-footer">
-        <p>&copy;2025 SmartPaint&Co. All rights reserved.</p>
+        <p>&copy; 2026 SmartPaint. All rights reserved.</p>
         <div class="disclosure-links">
             <a href="{{ url_for('terms') }}">Terms of Service</a> |
             <a href="{{ url_for('privacy') }}">Privacy Policy</a>
         </div>
-        
     </div>
 </footer>
+
+<!-- Global Custom Modal -->
+<div class="custom-modal-overlay" id="globalModalOverlay">
+  <div class="custom-modal" id="globalModal">
+    <div class="custom-modal-icon info" id="globalModalIcon">i</div>
+    <h3 class="custom-modal-title" id="globalModalTitle">Title</h3>
+    <p class="custom-modal-message" id="globalModalMessage">Message goes here.</p>
+    <div class="custom-modal-actions" id="globalModalActions">
+      <!-- Buttons will be injected here -->
+    </div>
+  </div>
+</div>
+
+<script>
+  window.showModal = function(title, message, type = 'info') {
+    const overlay = document.getElementById('globalModalOverlay');
+    const icon = document.getElementById('globalModalIcon');
+    const titleEl = document.getElementById('globalModalTitle');
+    const messageEl = document.getElementById('globalModalMessage');
+    const actionsEl = document.getElementById('globalModalActions');
+
+    titleEl.textContent = title;
+    messageEl.innerHTML = message.replace(/\n/g, '<br>');
+
+    icon.className = 'custom-modal-icon ' + type;
+    if (type === 'error') icon.textContent = '✖';
+    else if (type === 'success') icon.textContent = '✔';
+    else if (type === 'warning') icon.textContent = '⚠';
+    else icon.textContent = 'i';
+
+    actionsEl.innerHTML = '<button class="custom-modal-btn confirm" id="globalModalOkBtn">OK</button>';
+    
+    document.getElementById('globalModalOkBtn').onclick = () => {
+      overlay.classList.remove('active');
+    };
+
+    overlay.classList.add('active');
+  };
+
+  window.showConfirm = function(title, message, onConfirm, type = 'warning') {
+    const overlay = document.getElementById('globalModalOverlay');
+    const icon = document.getElementById('globalModalIcon');
+    const titleEl = document.getElementById('globalModalTitle');
+    const messageEl = document.getElementById('globalModalMessage');
+    const actionsEl = document.getElementById('globalModalActions');
+
+    titleEl.textContent = title;
+    messageEl.innerHTML = message.replace(/\n/g, '<br>');
+
+    icon.className = 'custom-modal-icon ' + type;
+    if (type === 'error') icon.textContent = '✖';
+    else if (type === 'success') icon.textContent = '✔';
+    else if (type === 'warning') icon.textContent = '⚠';
+    else icon.textContent = 'i';
+
+    actionsEl.innerHTML = `
+      <button class="custom-modal-btn cancel" id="globalModalCancelBtn">Batal</button>
+      <button class="custom-modal-btn confirm" id="globalModalConfirmBtn">Ya, Lanjutkan</button>
+    `;
+    
+    document.getElementById('globalModalCancelBtn').onclick = () => {
+      overlay.classList.remove('active');
+    };
+
+    document.getElementById('globalModalConfirmBtn').onclick = () => {
+      overlay.classList.remove('active');
+      if (onConfirm && typeof onConfirm === 'function') {
+        onConfirm();
+      }
+    };
+
+    overlay.classList.add('active');
+  };
+
+  // Override window.alert and window.confirm globally for safety
+  window.alert = function(msg) {
+    let type = 'info';
+    if (msg.toLowerCase().includes('error') || msg.toLowerCase().includes('gagal')) type = 'error';
+    if (msg.toLowerCase().includes('berhasil') || msg.toLowerCase().includes('selesai')) type = 'success';
+    showModal('Pemberitahuan', msg, type);
+  };
+
+  // We can't fully override window.confirm because it is synchronous and our modal is async.
+  // Instead, we will refactor the specific places that use confirm() to use showConfirm().
+</script>
