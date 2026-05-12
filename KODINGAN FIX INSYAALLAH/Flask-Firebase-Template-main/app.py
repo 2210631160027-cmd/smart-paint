@@ -264,7 +264,7 @@ def upload_color_image():
     total_weight = 0
 
 # Tentukan nilai p (semakin tinggi, semakin tajam/akurat pemisahan warnanya)
-    p = 5 
+    p = 3
 
     for name, physical_rgb in TONER_PHYSICAL.items():
         # 1. Hitung jarak (tetap sama)
