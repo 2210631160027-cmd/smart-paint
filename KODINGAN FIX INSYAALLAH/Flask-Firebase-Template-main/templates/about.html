@@ -5,18 +5,73 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/default_logo.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-  <title>About - SmartPaint</title>
+  <title>Panduan & Tentang - SmartPaint</title>
   <style>
     main {
+      display: flex;
       flex-direction: column;
+      align-items: center;
       padding: 72px 48px 60px;
       background: var(--off-white);
     }
 
-    .about-header { text-align: center; margin-bottom: 48px; padding-top: 48px; }
-    .about-header h1 { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
-    .about-header p { font-size: 0.95rem; color: var(--gray-400); }
+    /* --- Style Header Umum --- */
+    .section-header { text-align: center; margin-bottom: 40px; padding-top: 20px; }
+    .section-header h1 { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
+    .section-header p { font-size: 0.95rem; color: var(--gray-400); max-width: 600px; margin: 0 auto; line-height: 1.5; }
+    
+    /* --- Style Panduan Penggunaan --- */
+    .guide-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      max-width: 960px;
+      width: 100%;
+      margin-bottom: 60px;
+    }
 
+    .guide-card {
+      background: var(--white);
+      border: 1px solid var(--gray-100);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+    }
+
+    .guide-card:hover { box-shadow: var(--shadow-lg); }
+    .guide-card h3 { font-size: 1.15rem; margin-bottom: 12px; color: var(--accent); }
+    .guide-card p { font-size: 0.9rem; color: var(--gray-400); line-height: 1.6; margin-bottom: 16px; }
+    
+    .guide-img-placeholder {
+      width: 100%;
+      height: 180px;
+      background: var(--white);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--gray-100);
+      overflow: hidden;
+    }
+    
+    .guide-img-placeholder img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 8px;
+    }
+
+    /* Pembatas Antar Seksi */
+    .divider {
+      width: 100%;
+      max-width: 960px;
+      height: 1px;
+      background: #e2e8f0;
+      margin: 20px 0 60px;
+    }
+
+    /* --- Style Tim Pengembang --- */
     .team-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -36,55 +91,119 @@
     }
 
     .team-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-4px); }
-
-    .team-photo {
-      width: 110px; height: 110px;
-      border-radius: 50%;
-      overflow: hidden;
-      margin: 0 auto 20px;
-      border: 3px solid var(--gray-100);
-    }
-
+    .team-photo { width: 110px; height: 110px; border-radius: 50%; overflow: hidden; margin: 0 auto 20px; border: 3px solid var(--gray-100); }
     .team-photo img { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
-
     .team-card h3 { font-size: 1.05rem; margin-bottom: 4px; }
     .team-role { font-size: 0.82rem; color: var(--accent); font-weight: 600; margin-bottom: 12px; }
     .team-desc { font-size: 0.82rem; color: var(--gray-400); line-height: 1.6; margin: 0; }
 
+    /* --- Style Supported By --- */
+    .support-section { width: 100%; max-width: 960px; margin-top: 60px; text-align: center; }
+    .support-section h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 30px; color: #1a202c; }
+    .support-card { 
+      background: var(--white); border: 1px solid var(--gray-100); padding: 24px; 
+      border-radius: var(--radius-lg); transition: all 0.3s ease; display: inline-block; 
+      box-shadow: var(--shadow-sm); 
+    }
+    .support-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-4px); }
+    .support-card img { max-width: 180px; height: auto; filter: grayscale(20%); transition: filter 0.3s; }
+    .support-card:hover img { filter: grayscale(0%); }
+
+    /* --- Responsivitas --- */
     @media (max-width: 768px) {
       main { padding: 72px 20px 40px; }
+      .guide-grid { grid-template-columns: 1fr; }
       .team-grid { grid-template-columns: 1fr; max-width: 360px; }
     }
   </style>
 </head>
 <body>
   {% include 'navbar_private.html' %}
+  
   <main>
-    <div class="about-header">
+    <div class="section-header">
+      <h1>Panduan Penggunaan</h1>
+      <p>Langkah operasional sistem pencampur cat otomatis SmartPaint.</p>
+    </div>
+
+    <div class="guide-grid">
+      <div class="guide-card">
+        <h3>1. Proses Deteksi Warna</h3>
+        <p>Arahkan kamera ke sampel warna dan tekan tombol <strong>Capture</strong>. Periksa gambar hasil tangkapan pada kotak <em>preview</em> yang terletak tepat setelah tombol capture untuk memastikan posisi objek sudah pas sebelum diproses.</p>
+        <div class="guide-img-placeholder">
+          <img src="{{ url_for('static', filename='images/panduan_capture.png') }}" alt="Panduan Proses Deteksi">
+        </div>
+      </div>
+      
+      <div class="guide-card">
+        <h3>2. Kalkulasi & Eksekusi</h3>
+        <p>Sistem akan menghitung komposisi formula <em>toner</em> yang presisi menggunakan penyesuaian bobot terhadap jarak dengan pangkat (<em>p</em>). Klik <strong>Kirim</strong> untuk mulai mengirim instruksi ke mesin pencampur.</p>
+        <div class="guide-img-placeholder">
+          <img src="{{ url_for('static', filename='images/panduan_eksekusi.png') }}" alt="Panduan Kalkulasi dan Eksekusi">
+        </div>
+      </div>
+
+      <div class="guide-card">
+        <h3>3. Monitoring Sistem</h3>
+        <p>Pantau proses kerja mesin secara <em>real-time</em>. Anda dapat melihat status koneksi perangkat serta memastikan kapasitas toner cat cukup.</p>
+        <div class="guide-img-placeholder">
+          <img src="{{ url_for('static', filename='images/panduan_monitoring.png') }}" alt="Panduan Halaman Monitoring">
+        </div>
+      </div>
+
+      <div class="guide-card">
+        <h3>4. Riwayat Pencampuran</h3>
+        <p>Buka halaman History untuk melihat log tugas yang telah selesai. Anda dapat meninjau ulang detail target warna dan mengevaluasi keakuratan takaran formula pada setiap sesi yang pernah dilakukan.</p>
+        <div class="guide-img-placeholder">
+          <img src="{{ url_for('static', filename='images/panduan_history.png') }}" alt="Panduan Halaman History">
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-header">
       <h1>Tim Pengembang</h1>
       <p>Mahasiswa Teknik Elektro - Universitas Singaperbangsa Karawang</p>
     </div>
+    
     <div class="team-grid">
-      <div class="team-card">
-        <div class="team-photo"><img src="{{ url_for('static', filename='images/foto1.png') }}" alt="Dede Irwan"></div>
-        <h3>Dede Irwan</h3>
-        <p class="team-role">Project Leader</p>
-        <p class="team-desc">Electrical Circuit, Monitoring System & UI/UX Designer</p>
-      </div>
-      <div class="team-card">
-        <div class="team-photo"><img src="{{ url_for('static', filename='images/foto2.png') }}" alt="Alfarizi Achmad Albani"></div>
-        <h3>Alfarizi Achmad Albani</h3>
-        <p class="team-role">Software Developer</p>
-        <p class="team-desc">Image Processing, IoT & Fullstack Developer</p>
-      </div>
-      <div class="team-card">
-        <div class="team-photo"><img src="{{ url_for('static', filename='images/foto3.png') }}" alt="Bintang Ramadhan"></div>
-        <h3>Bintang Ramadhan</h3>
-        <p class="team-role">Hardware Engineer</p>
-        <p class="team-desc">Embedded System, Sensor Integration & Control System</p>
-      </div>
+      <a href="https://www.instagram.com/ddirrwan_/" target="_blank" style="text-decoration: none; color: inherit;">
+        <div class="team-card">
+          <div class="team-photo"><img src="{{ url_for('static', filename='images/foto1.png') }}" alt="Dede Irwan"></div>
+          <h3>Dede Irwan</h3>
+          <p class="team-role">Project Leader</p>
+          <p class="team-desc">Electrical Circuit, Monitoring System & IoT</p>
+        </div>
+      </a>
+      
+      <a href="https://www.instagram.com/alfaachmad15/" target="_blank" style="text-decoration: none; color: inherit;">
+        <div class="team-card">
+          <div class="team-photo"><img src="{{ url_for('static', filename='images/foto2.png') }}" alt="Alfarizi Achmad Albani"></div>
+          <h3>Alfarizi Achmad Albani</h3>
+          <p class="team-role">Software Developer</p>
+          <p class="team-desc">Image Processing, UI/UX & Fullstack Developer</p>
+        </div>
+      </a>
+      
+      <a href="https://www.instagram.com/9rmdhn/" target="_blank" style="text-decoration: none; color: inherit;">
+        <div class="team-card">
+          <div class="team-photo"><img src="{{ url_for('static', filename='images/foto3.png') }}" alt="Bintang Ramadhan"></div>
+          <h3>Bintang Ramadhan</h3>
+          <p class="team-role">Hardware Engineer</p>
+          <p class="team-desc">Embedded System, Sensor Integration & Control System</p>
+        </div>
+      </a>
+    </div>
+
+    <div class="support-section">
+      <h2>Supported by</h3>
+      <a href="https://maps.app.goo.gl/o5JtgVZxPggeraEf9" target="_blank" class="support-card">
+        <img src="{{ url_for('static', filename='images/logo_mitra.jpeg') }}" alt="Toko Cat Sugih Makmur">
+      </a>
     </div>
   </main>
+
   {% include 'footer.html' %}
 </body>
 </html>

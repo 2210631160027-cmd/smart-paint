@@ -6,7 +6,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/default_logo.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-  <title>Deteksi Warnuy - SmartPaint</title>
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <title>Deteksi Warna - SmartPaint</title>
   <style>
     main {
       flex-direction: column;
@@ -66,13 +70,8 @@
     }
 
     @keyframes spin {
-      0% {
-        transform: rotate(0deg)
-      }
-
-      100% {
-        transform: rotate(360deg)
-      }
+      0% { transform: rotate(0deg) }
+      100% { transform: rotate(360deg) }
     }
 
     .pulse {
@@ -81,17 +80,8 @@
     }
 
     @keyframes pulse {
-
-      0%,
-      100% {
-        transform: scale(1);
-        opacity: 1
-      }
-
-      50% {
-        transform: scale(1.15);
-        opacity: 0.7
-      }
+      0%, 100% { transform: scale(1); opacity: 1 }
+      50% { transform: scale(1.15); opacity: 0.7 }
     }
 
     .detection-grid {
@@ -146,10 +136,6 @@
       border-color: var(--accent);
     }
 
-    .controls-panel select option {
-      background: var(--white);
-    }
-
     .btn-group {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -190,6 +176,25 @@
       background: var(--gray-100);
       color: var(--gray-400);
       cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    #btnFlash {
+      width: 100%;
+      background: var(--gray-50);
+      color: var(--navy);
+      border: 1.5px solid var(--gray-100);
+      padding: 14px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: all var(--transition);
+    }
+
+    #btnFlash:hover {
+      background: var(--gray-100);
     }
 
     #colorPreview {
@@ -197,6 +202,21 @@
       height: 44px;
       border-radius: var(--radius-sm);
       border: 1px solid var(--gray-100);
+      background: var(--gray-50);
+    }
+
+    #local-rgb-display {
+      font-family: var(--font);
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-align: center;
+      background: var(--white);
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--gray-100);
+      color: var(--navy);
+      margin-top: -4px;
+      line-height: 1.5;
     }
 
     #info {
@@ -249,28 +269,44 @@
       <div id="lockOverlay">
         <div class="lock-icon" id="statusIcon">LOCKED</div>
         <div class="lock-text" id="statusText">WADAH TIDAK TERDETEKSI</div>
-        <p id="statusDesc" style="color:var(--gray-400);margin-bottom:20px;">Letakkan wadah kaleng untuk memulai
-          deteksi.</p>
+        <p id="statusDesc" style="color:var(--gray-400);margin-bottom:20px;">Letakkan wadah kaleng untuk memulai deteksi.</p>
         <button id="btnBypass">Manual Bypass</button>
       </div>
       <h2 class="detect-title">Deteksi Warna</h2>
       <div class="detection-grid">
         <div class="camera-section">
-          <div id="videoBox"><video id="video" autoplay playsinline></video><canvas class="overlay"
-              id="overlay"></canvas></div>
+          <div id="videoBox">
+            <video id="video" autoplay playsinline></video>
+            <canvas class="overlay" id="overlay"></canvas>
+          </div>
         </div>
         <div class="controls-panel">
           <select id="kapasitasSelect">
             <option value="">-- Pilih Kapasitas --</option>
+            <option value="100">100 ml (test mode)</option>
+            <option value="250">250 ml</option>
             <option value="500">500 ml</option>
-            <option value="1000">1000 ml</option>
           </select>
-          <div class="btn-group"><button id="btnCapture">Ambil</button><button id="btnSend" disabled>Kirim</button>
+          
+          <div class="btn-group">
+            <button id="btnCapture">Ambil</button>
+            <button id="btnSend" disabled>Kirim</button> 
           </div>
+          
+          <button id="btnFlash">⚡ Senter: MATI</button>
+
           <div id="colorPreview"></div>
+          
+          <div id="local-rgb-display">
+            📸 RGB Preview (Lokal Canvas): - <br>
+            🎯 RGB Resmi (Server): -
+          </div>
+          
           <pre id="info">Menunggu wadah kaleng...</pre>
-          <div class="preview-results"><img id="capturedPreview" class="img-result" src="" /><img id="serverRGB"
-              class="img-result" src="" /></div>
+          <div class="preview-results">
+            <img id="capturedPreview" class="img-result" src="" />
+            <img id="serverRGB" class="img-result" src="" />
+          </div>
         </div>
       </div>
     </div>
@@ -281,16 +317,197 @@
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
     const fc = { apiKey: "AIzaSyDUUYsYskvAeS3yC3Ij5OvjNLqIBxd5Jmc", authDomain: "deteksi-body.firebaseapp.com", databaseURL: "https://deteksi-body-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "deteksi-body" };
     const app = initializeApp(fc), db = getDatabase(app);
-    const video = document.getElementById("video"), canvas = document.getElementById("canvas"), ctx = canvas.getContext("2d"), overlay = document.getElementById("overlay"), ctxO = overlay.getContext("2d"), lockOverlay = document.getElementById("lockOverlay"), statusIcon = document.getElementById("statusIcon"), statusText = document.getElementById("statusText"), statusDesc = document.getElementById("statusDesc"), btnCapture = document.getElementById("btnCapture"), btnSend = document.getElementById("btnSend"), info = document.getElementById("info"), preview = document.getElementById("capturedPreview"), colorPreview = document.getElementById("colorPreview"), btnBypass = document.getElementById("btnBypass");
+    const video = document.getElementById("video"), canvas = document.getElementById("canvas"), ctx = canvas.getContext("2d"), overlay = document.getElementById("overlay"), ctxO = overlay.getContext("2d"), lockOverlay = document.getElementById("lockOverlay"), statusIcon = document.getElementById("statusIcon"), statusText = document.getElementById("statusText"), statusDesc = document.getElementById("statusDesc"), btnCapture = document.getElementById("btnCapture"), btnSend = document.getElementById("btnSend"), info = document.getElementById("info"), preview = document.getElementById("capturedPreview"), colorPreview = document.getElementById("colorPreview"), btnBypass = document.getElementById("btnBypass"), btnFlash = document.getElementById("btnFlash"), localRgbDisplay = document.getElementById("local-rgb-display");
     let isKalengReady = false, isManualBypass = false, isProcessing = false, lastCapturedBlob = null;
-    function checkAccess() { if (isProcessing) return; if (isKalengReady === true || isKalengReady === 1 || isManualBypass) { lockOverlay.style.display = "none"; btnCapture.disabled = false; info.textContent = isManualBypass ? "Sistem Siap (Mode Manual)." : "Sistem Siap. Silakan ambil gambar."; } else { lockOverlay.style.display = "flex"; statusIcon.textContent = "LOCKED"; statusIcon.className = "lock-icon"; statusText.textContent = "WADAH TIDAK TERDETEKSI"; statusText.style.color = "var(--danger)"; btnCapture.disabled = true; btnSend.disabled = true; info.textContent = "Wadah tidak terdeteksi!"; } }
+    let videoTrack = null;
+    let isFlashOn = false;
+    
+    function checkAccess() { 
+      if (isProcessing) return; 
+      if (isKalengReady === true || isKalengReady === 1 || isManualBypass) { 
+        lockOverlay.style.display = "none"; 
+        btnCapture.disabled = false; 
+        info.textContent = isManualBypass ? "Sistem Siap (Mode Manual)." : "Sistem Siap. Silakan ambil gambar."; 
+      } else { 
+        lockOverlay.style.display = "flex"; 
+        statusIcon.textContent = "LOCKED"; 
+        statusIcon.className = "lock-icon"; 
+        statusText.textContent = "WADAH TIDAK TERDETEKSI"; 
+        statusText.style.color = "var(--danger)"; 
+        btnCapture.disabled = true; 
+        btnSend.disabled = true; 
+        info.textContent = "Wadah tidak terdeteksi!"; 
+      } 
+    }
+    
     onValue(ref(db, "Monitoring_Wadah/status"), (s) => { isKalengReady = s.val(); checkAccess(); });
-    btnBypass.onclick = () => { showConfirm("Konfirmasi", "Mode Manual akan diaktifkan. Lanjutkan?", () => { isManualBypass = true; checkAccess(); }); };
-    async function startCamera() { try { const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false }); video.srcObject = stream; } catch (err) { alert("Kamera error: " + err.message); } }
-    function drawMidpoint() { overlay.width = video.clientWidth; overlay.height = video.clientHeight; ctxO.clearRect(0, 0, overlay.width, overlay.height); const cx = overlay.width / 2, cy = overlay.height / 2; ctxO.beginPath(); ctxO.arc(cx, cy, 12, 0, Math.PI * 2); ctxO.strokeStyle = "#3D5AF1"; ctxO.lineWidth = 3; ctxO.stroke(); }
-    video.addEventListener("loadedmetadata", drawMidpoint); window.addEventListener("resize", drawMidpoint); startCamera();
-    btnCapture.onclick = async () => { canvas.width = video.videoWidth; canvas.height = video.videoHeight; ctx.drawImage(video, 0, 0, canvas.width, canvas.height); const pixel = ctx.getImageData(canvas.width / 2, canvas.height / 2, 1, 1).data; const [r, g, b] = pixel; lastCapturedBlob = await new Promise(res => canvas.toBlob(res, "image/jpeg", 0.9)); preview.src = URL.createObjectURL(lastCapturedBlob); colorPreview.style.background = `rgb(${r},${g},${b})`; btnSend.disabled = false; info.textContent = `Terdeteksi!\nRGB: ${r},${g},${b}`; };
-    btnSend.onclick = async () => { const cap = document.getElementById("kapasitasSelect").value; if (!cap) return alert("Pilih kapasitas!"); isProcessing = true; let totalTime = (cap === "500") ? 24 : 36, mixingTime = 10; lockOverlay.style.display = "flex"; statusIcon.textContent = "PROCESSING"; statusIcon.className = "lock-icon pulse"; statusText.textContent = "PROSES PENCAMPURAN..."; statusText.style.color = "var(--accent)"; btnBypass.style.display = "none"; btnSend.disabled = true; try { const formData = new FormData(); formData.append("file", lastCapturedBlob, "capture.jpg"); formData.append("capacity", cap); const res = await fetch("/upload", { method: "POST", body: formData }); const data = await res.json(); await fetch("/mqtt_publish", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data.mix_ml) }); let timeLeft = totalTime; const ti = setInterval(() => { timeLeft--; if (timeLeft > mixingTime) { statusIcon.textContent = "DROPPING"; statusIcon.className = "lock-icon pulse"; statusDesc.innerHTML = `Meneteskan Warna...<br><b style="font-size:1.5rem;color:var(--navy);">${timeLeft - mixingTime}s</b>`; } else if (timeLeft > 0) { statusIcon.textContent = "MIXING"; statusIcon.className = "lock-icon pulse"; statusDesc.innerHTML = `Pengadukan...<br><b style="font-size:1.5rem;color:var(--navy);">${timeLeft}s</b>`; } else { clearInterval(ti); isProcessing = false; alert("Selesai! Cat telah tercampur."); btnBypass.style.display = "block"; checkAccess(); if (data.rgb_path) document.getElementById("serverRGB").src = data.rgb_path; info.textContent = `Berhasil!\nRGB: ${data.rgb}`; } }, 1000); } catch (err) { alert("Gagal mengirim instruksi."); isProcessing = false; btnBypass.style.display = "block"; checkAccess(); } };
+    
+    // PERBAIKAN: POP-UP CONFIRM MANUAL BYPASS DENGAN SWEETALERT2
+    btnBypass.onclick = () => { 
+      Swal.fire({
+        title: 'Aktifkan Mode Manual?',
+        text: "Pendeteksian wadah fisik kaleng akan dilewati.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3D5AF1',
+        cancelButtonColor: '#BDC3C7',
+        confirmButtonText: 'Ya, Aktifkan!',
+        cancelButtonText: 'Batal'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          isManualBypass = true; 
+          checkAccess(); 
+        }
+      });
+    };
+    
+    async function startCamera() { 
+      try { 
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false }); 
+        video.srcObject = stream; 
+        video.onloadedmetadata = () => {
+          videoTrack = stream.getVideoTracks()[0];
+        };
+      } catch (err) { 
+        Swal.fire('Error Kamera', err.message, 'error');
+      } 
+    }
+    
+    function drawMidpoint() { 
+      overlay.width = video.clientWidth; 
+      overlay.height = video.clientHeight; 
+      ctxO.clearRect(0, 0, overlay.width, overlay.height); 
+      const cx = overlay.width / 2, cy = overlay.height / 2; 
+      ctxO.beginPath(); 
+      ctxO.arc(cx, cy, 12, 0, Math.PI * 2); 
+      ctxO.strokeStyle = "#3D5AF1"; 
+      ctxO.lineWidth = 5; 
+      ctxO.stroke(); 
+    }
+    
+    video.addEventListener("loadedmetadata", drawMidpoint); 
+    window.addEventListener("resize", drawMidpoint); 
+    startCamera();
+    
+    btnFlash.onclick = async () => {
+      if (!videoTrack) {
+        Swal.fire('Info', 'Kamera belum siap atau tidak mendukung fitur flash.', 'info');
+        return;
+      }
+      try {
+        const capabilities = videoTrack.getCapabilities();
+        if (!capabilities.torch) {
+          Swal.fire('Info', 'Perangkat tidak mendukung kontrol flash pada kamera ini.', 'info');
+          return;
+        }
+        isFlashOn = !isFlashOn;
+        await videoTrack.applyConstraints({ advanced: [{ torch: isFlashOn }] });
+        btnFlash.innerHTML = isFlashOn ? "💡 Senter: HIDUP" : "⚡ Senter: MATI";
+        btnFlash.style.background = isFlashOn ? "var(--accent)" : "var(--gray-50)";
+        btnFlash.style.color = isFlashOn ? "var(--white)" : "var(--navy)";
+      } catch (err) {
+        Swal.fire('Error Flash', err.message, 'error');
+      }
+    };
+    
+    btnCapture.onclick = async () => { 
+      canvas.width = video.videoWidth; 
+      canvas.height = video.videoHeight; 
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height); 
+      
+      const pixel = ctx.getImageData(canvas.width / 2, canvas.height / 2, 1, 1).data;
+      const [r, g, b] = pixel;
+      
+      lastCapturedBlob = await new Promise(res => canvas.toBlob(res, "image/jpeg", 0.9)); 
+      preview.src = URL.createObjectURL(lastCapturedBlob); 
+      
+      colorPreview.style.background = `rgb(${r},${g},${b})`; 
+      
+      localRgbDisplay.innerHTML = `
+        📸 RGB Preview (Lokal Canvas): <b style="color:#E74C3C">R: ${r}</b> | <b style="color:#27AE60">G: ${g}</b> | <b style="color:#3D5AF1">B: ${b}</b><br>
+        🎯 RGB Resmi (Server): <span style="color:var(--gray-400)">Menunggu dikirim...</span>
+      `;
+      
+      btnSend.disabled = false; 
+      info.textContent = "Gambar sampel berhasil diambil.\nSilakan pilih kapasitas wadah, lalu klik 'Kirim' untuk memproses warna resmi dari server."; 
+    };
+    
+    btnSend.onclick = async () => { 
+      const cap = document.getElementById("kapasitasSelect").value; 
+      if (!cap) {
+        Swal.fire('Info', 'Silakan pilih kapasitas terlebih dahulu!', 'info');
+        return;
+      }
+      
+      isProcessing = true; 
+      let totalTime = (cap === "100") ? 12 : (cap === "1000" ? 36 : 24);
+      let mixingTime = 10; 
+       
+      lockOverlay.style.display = "flex"; 
+      statusIcon.textContent = "PROCESSING"; 
+      statusIcon.className = "lock-icon pulse"; 
+      statusText.textContent = "PROSES PENCAMPURAN..."; 
+      statusText.style.color = "var(--accent)"; 
+      btnBypass.style.display = "none"; 
+      btnSend.disabled = true; 
+      
+      try { 
+        const formData = new FormData(); 
+        formData.append("file", lastCapturedBlob, "capture.jpg"); 
+        formData.append("capacity", cap); 
+        
+        const res = await fetch("/upload", { method: "POST", body: formData }); 
+        const data = await res.json(); 
+        
+        await fetch("/mqtt_publish", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data.mix_ml) }); 
+        
+        let timeLeft = totalTime; 
+        const ti = setInterval(() => { 
+          timeLeft--; 
+          if (timeLeft > mixingTime) { 
+            statusIcon.textContent = "DROPPING"; 
+            statusIcon.className = "lock-icon pulse"; 
+            statusDesc.innerHTML = `Meneteskan Warna...<br><b style="font-size:1.5rem;color:var(--navy);">${timeLeft - mixingTime}s</b>`; 
+          } else if (timeLeft > 0) { 
+            statusIcon.textContent = "MIXING"; 
+            statusIcon.className = "lock-icon pulse"; 
+            statusDesc.innerHTML = `Pengadukan...<br><b style="font-size:1.5rem;color:var(--navy);">${timeLeft}s</b>`; 
+          } else { 
+            clearInterval(ti); 
+            isProcessing = false; 
+            
+            // PERBAIKAN: ALERT SELESAI MENGGUNAKAN SWEETALERT2 MODERN
+            Swal.fire({
+              title: 'Proses Selesai!',
+              text: 'Cat telah berhasil dicampur dengan presisi.',
+              icon: 'success',
+              confirmButtonColor: '#3D5AF1'
+            });
+
+            btnBypass.style.display = "block"; 
+            checkAccess(); 
+            
+            colorPreview.style.background = `rgb(${data.rgb[0]},${data.rgb[1]},${data.rgb[2]})`;
+            
+            const currentText = localRgbDisplay.innerHTML.split('<br>')[0];
+            localRgbDisplay.innerHTML = `
+              ${currentText}<br>
+              🎯 RGB Resmi (Server): <b style="color:#E74C3C">R: ${data.rgb[0]}</b> | <b style="color:#27AE60">G: ${data.rgb[1]}</b> | <b style="color:#3D5AF1">B: ${data.rgb[2]}</b>
+            `;
+            
+            if (data.rgb_path) document.getElementById("serverRGB").src = data.rgb_path; 
+            
+            let resepText = `R: ${data.mix_ml.R}ml, G: ${data.mix_ml.G}ml, B: ${data.mix_ml.B}ml, Y: ${data.mix_ml.Y}ml, W: ${data.mix_ml.W}ml, Bl: ${data.mix_ml.Bl}ml`;
+            info.textContent = `Berhasil!\nRGB Server (Terkalibrasi): ${data.rgb[0]}, ${data.rgb[1]}, ${data.rgb[2]}\nParameter Digunakan: p = ${data.p_value}\nResep Aktuator: ${resepText}`; 
+          } 
+        }, 1000); 
+      } catch (err) { 
+        Swal.fire('Error', 'Gagal mengirim instruksi ke alat.', 'error');
+        isProcessing = false; 
+        btnBypass.style.display = "block"; 
+        checkAccess(); 
+      } 
+    };
   </script>
   {% include 'footer.html' %}
 </body>

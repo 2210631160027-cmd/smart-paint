@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/default_logo.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   <title>History - SmartPaint</title>
   <style>
     main { display:block; padding:90px 24px 60px; background:var(--off-white); min-height:100vh; }
@@ -23,6 +27,18 @@
     .btn-remix { width:100%; background:var(--navy); color:var(--white); border:none; padding:13px; border-radius:var(--radius-sm); font-family:var(--font); font-weight:600; cursor:pointer; transition:all var(--transition); font-size:0.9rem; }
     .btn-remix:hover { background:var(--navy-light); box-shadow:var(--shadow-md); }
     .btn-remix:disabled { background:var(--gray-100); color:var(--gray-400); cursor:not-allowed; box-shadow:none; }
+    
+    .btn-delete { width:100%; background:#E74C3C; color:var(--white); border:none; padding:13px; border-radius:var(--radius-sm); font-family:var(--font); font-weight:600; cursor:pointer; transition:all var(--transition); font-size:0.9rem; margin-top:8px; }
+    .btn-delete:hover { background:#C0392B; box-shadow:var(--shadow-md); }
+    
+    .dynamic-color-bar {
+      width: 100%; 
+      height: 44px; 
+      border-radius: var(--radius-sm); 
+      border: 1px solid var(--gray-100); 
+      margin-bottom: 12px; 
+      background-color: rgb(var(--r), var(--g), var(--b));
+    }
     @media(max-width:768px) { .grid{grid-template-columns:1fr;} }
   </style>
 </head>
@@ -34,7 +50,7 @@
     {% if records %}
     <div class="grid">
       {% for item in records %}
-      <div class="history-card">
+      <div class="history-card" id="card-{{ item.id }}">
         {% if item.image %}
         <img src="{{ url_for('static', filename='history/' ~ item.image) }}" class="history-image" alt="Hasil Deteksi">
         {% else %}
@@ -42,8 +58,27 @@
         {% endif %}
         <div class="history-content">
           <div class="detail-row"><strong>Tanggal</strong><span style="font-size:0.8rem;color:var(--gray-400);">{{ item.timestamp }}</span></div>
+          
+          <div class="detail-row"><strong>Metode Jarak</strong><span style="font-weight:700;color:var(--navy);">Euclidean CIELAB</span></div>
+          <div class="detail-row"><strong>Pangkat Adaptif</strong><span style="font-weight:700;color:var(--accent);">p = {{ item.p_value|default(2)|round(2) }}</span></div>
+          
+          <div class="detail-row">
+            <strong>Waktu Proses</strong>
+            <span style="font-weight:700; color:var(--navy);">
+              {% if item.waktu_proses_ms %}
+                {{ item.waktu_proses_ms }} ms
+              {% else %}
+                <span style="color:var(--gray-400); font-weight:normal; font-size:0.8rem;">Tidak tercatat</span>
+              {% endif %}
+            </span>
+          </div>
+          
           <div class="section-title">Warna Terdeteksi</div>
-          <div class="detail-row"><span>RGB: <b style="color:#E74C3C">{{ item.rgb_normalize.r|default(0) }}</b> <b style="color:#27AE60">{{ item.rgb_normalize.g|default(0) }}</b> <b style="color:#3D5AF1">{{ item.rgb_normalize.b|default(0) }}</b></span></div>
+          
+          <div class="dynamic-color-bar" style="--r: {{ item.rgb.r|default(0) }}; --g: {{ item.rgb.g|default(0) }}; --b: {{ item.rgb.b|default(0) }};"></div>
+          
+          <div class="detail-row"><span>RGB: <b style="color:#E74C3C">{{ item.rgb.r|default(0) }}</b> <b style="color:#27AE60">{{ item.rgb.g|default(0) }}</b> <b style="color:#3D5AF1">{{ item.rgb.b|default(0) }}</b></span></div>
+          
           <div class="section-title">Komposisi (ml)</div>
           <div class="mix-grid">
             <div class="mix-item" style="border-color:#E74C3C;">R: {{ item.mix_ml.R|default(0) }}</div>
@@ -54,6 +89,8 @@
             <div class="mix-item" style="border-color:#2D3142;">Bl: {{ item.mix_ml.Bl|default(0) }}</div>
           </div>
           <button class="btn-remix action-remix" data-mix='{{ item.mix_ml|tojson|safe }}'>Mix Ulang</button>
+          
+          <button class="btn-delete action-delete" data-id="{{ item.id }}">Hapus Riwayat</button>
         </div>
       </div>
       {% endfor %}
@@ -69,30 +106,88 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.action-remix').forEach(btn => {
     btn.addEventListener('click', function() {
       const mix = JSON.parse(this.getAttribute('data-mix'));
-      showConfirm("Konfirmasi", "Proses ulang campuran ini?", async () => {
-        const orig = this.innerHTML;
-        this.disabled = true;
-        this.innerHTML = "Mengirim...";
-        try {
-          const r = await fetch("/mqtt_publish", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(mix)
-          });
-          if (r.ok) {
-            alert("Berhasil! Sinyal dikirim.");
-            this.innerHTML = "Berhasil";
-          } else {
-            throw new Error("Gagal.");
+      
+      Swal.fire({
+        title: 'Proses Ulang?',
+        text: "Kirim porsi volume ini kembali ke alat pencampur cat?",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3D5AF1',
+        cancelButtonColor: '#BDC3C7',
+        confirmButtonText: 'Ya, Kirim!',
+        cancelButtonText: 'Batal'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          const orig = btn.innerHTML;
+          btn.disabled = true;
+          btn.innerHTML = "Mengirim...";
+          try {
+            const r = await fetch("/mqtt_publish", {
+              method: "POST",
+              headers: {"Content-Type": "application/json"},
+              body: JSON.stringify(mix)
+            });
+            if (r.ok) {
+              Swal.fire('Berhasil!', 'Sinyal instruksi berhasil dikirim via MQTT.', 'success');
+              btn.innerHTML = "Berhasil";
+            } else {
+              throw new Error("Gagal.");
+            }
+          } catch(e) {
+            Swal.fire('Error!', 'Gagal menerbitkan sinyal: ' + e.message, 'error');
+            btn.innerHTML = orig;
+          } finally {
+            setTimeout(() => {
+              btn.disabled = false;
+              btn.innerHTML = orig;
+            }, 3000);
           }
-        } catch(e) {
-          alert("Error: " + e.message);
-          this.innerHTML = orig;
-        } finally {
-          setTimeout(() => {
-            this.disabled = false;
-            this.innerHTML = orig;
-          }, 3000);
+        }
+      });
+    });
+  });
+
+  document.querySelectorAll('.action-delete').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const docId = this.getAttribute('data-id');
+      
+      Swal.fire({
+        title: 'Hapus Permanen?',
+        text: "Data riwayat deteksi ini akan dihapus dari Firebase secara permanen!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#E74C3C',
+        cancelButtonColor: '#BDC3C7',
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          const origText = btn.innerHTML;
+          btn.disabled = true;
+          btn.innerHTML = "Menghapus...";
+          
+          fetch(`/delete_history/${docId}`, { method: "POST" })
+            .then(res => res.json())
+            .then(data => {
+              if (data.status === 'success') {
+                Swal.fire({
+                  title: 'Terhapus!',
+                  text: 'Data riwayat berhasil dibersihkan.',
+                  icon: 'success'
+                }).then(() => {
+                  window.location.reload();
+                });
+              } else {
+                Swal.fire('Gagal!', 'Error: ' + (data.error || "Terjadi kesalahan"), 'error');
+                btn.disabled = false;
+                btn.innerHTML = origText;
+              }
+            })
+            .catch(err => {
+              Swal.fire('Error!', 'Masalah koneksi jaringan: ' + err.message, 'error');
+              btn.disabled = false;
+              btn.innerHTML = origText;
+            });
         }
       });
     });
