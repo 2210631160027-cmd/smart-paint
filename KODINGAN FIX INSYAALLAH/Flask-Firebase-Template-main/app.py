@@ -357,6 +357,8 @@ def upload_color_image():
         g = int(avg_color[1])  
         b = int(avg_color[2])  
 
+        h, s, v = colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)
+
         # ==========================================
         # 2. KONVERSI RGB -> LAB
         # ==========================================
@@ -389,14 +391,14 @@ def upload_color_image():
         # 3. KOORDINAT RIIL TONER FISIK (KALIBRASI & KOMPENSASI EUCLIDEAN)
         # =====================================================================
         TONER_PHYSICAL = {
-            'R': [242, 48, 30],
-            'G': [117, 193, 47],
-            'B': [37, 61, 171],
-            'Y': [252, 205, 54],
-            'W': [254, 254, 243],
-            'Bl': [2, 1, 0]
-        }
+        'R': [220, 35, 30],    # Red 2261
+        'G': [104, 188, 37],    # Panama Green 1316
+        'B': [0, 66, 170],    # Blue Oreo 3428
+        'Y': [254, 205, 17],   # Lemon Yellow 3552
+        'W': [255, 255, 255],  # White 0001
+        'Bl': [10, 10, 10]     # Black 0020
 
+        }
 
         capacity_ml = request.form.get('capacity', type=float) or 500.0
 
@@ -406,96 +408,147 @@ def upload_color_image():
         max_val = max(r, g, b)
         min_val = min(r, g, b)
         saturation = (max_val - min_val) / max_val if max_val > 0 else 0
-        p = request.form.get('p_value', type=float) or float(np.clip(1.5 + saturation * 1.5, 1.5, 4.0))
+        p = request.form.get('p_value', type=float) or float(np.clip(2.5 + saturation * 2.5, 2.5, 5.0))
 
 
         # =====================================================================
-        # PHASE 2: CIEDE2000 + FILTER THRESHOLD
+        # PHASE 2: CIEDE76 + HUE-DIRECTION GATE + FILTER THRESHOLD (SMOOTH)
         # =====================================================================
+        def smoothstep(x, edge0, edge1):
+            if edge1 <= edge0:
+                return 1.0 if x >= edge1 else 0.0
+            t = np.clip((x - edge0) / (edge1 - edge0), 0.0, 1.0)
+            return float(t * t * (3 - 2 * t))
+
         distances = {}
         weights = {}
+        phys_lab_cache = {}
 
+        target_a, target_b_lab = target_lab[1], target_lab[2]
+        target_chroma_mag = float(np.hypot(target_a, target_b_lab))
 
         for name, physical_rgb in TONER_PHYSICAL.items():
             phys_rgb_norm = np.array([[[physical_rgb[0]/255.0, physical_rgb[1]/255.0, physical_rgb[2]/255.0]]])
             phys_lab = rgb2lab(phys_rgb_norm)[0][0]
-            dist = deltaE_cie76(target_lab, phys_lab)  
+            phys_lab_cache[name] = phys_lab
+
+            dist = deltaE_cie76(target_lab, phys_lab)
             distances[name] = dist
             weights[name] = 1.0 / ((dist + 0.01) ** p)
 
+            # 🆕 PERBAIKAN 1: BIAS BOBOT MERAH vs KUNING (UNIVERSAL)
+            # Pigmen Merah di dunia nyata 2-3x lebih kuat dari Kuning.
+            # Jika target oranye, kita naikkan bobot Kuning dan tekan Merah.
+            # Jika target MERAH MURNI (jarak 0), bobot Merah tetap ~∞ (tidak rusak).
+            if name == 'Y':
+                weights[name] *= 2.5
+            elif name == 'R':
+                weights[name] *= 0.5
+            # -------------------------------------------
 
-        # Filter threshold 5%
-        total_weight = sum(weights.values())
-        for name in list(weights.keys()):
-            if weights[name] / total_weight < 0.05:
-                weights[name] = 0.0
+            if name in ('R', 'G', 'B', 'Y') and target_chroma_mag > 1e-6:
+                toner_a, toner_b_lab = phys_lab[1], phys_lab[2]
+                toner_mag = np.hypot(toner_a, toner_b_lab)
+                if toner_mag > 1e-6:
+                    cos_sim = (target_a * toner_a + target_b_lab * toner_b_lab) / (
+                        target_chroma_mag * toner_mag
+                    )
+                else:
+                    cos_sim = 0.0
+                hue_gate = smoothstep(cos_sim, -0.1, 0.5)
+                weights[name] *= hue_gate
+
+        total_weight_all = sum(weights.values())
+        if total_weight_all > 0:
+            for name in ['R', 'G', 'B', 'Y']:
+                proporsi = weights[name] / total_weight_all
+                weights[name] *= smoothstep(proporsi, 0.01, 0.05)
 
 
         # =====================================================================
-        # PHASE 3: TINTING LOGIC (KOREKSI)
+        # PHASE 2.5: GRAY HANDLING (SMOOTH, BUKAN ON/OFF)
         # =====================================================================
-        h, s, v = colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)
+        gray_fade = smoothstep(saturation, 0.05, 0.15)
+        for name in ['R', 'G', 'B', 'Y']:
+            weights[name] *= gray_fade
 
 
-        # Putih: semakin terang & rendah saturasi
-        w_ratio = (v ** 1.5) * ((1.0 - s) ** 1.2)
+        # =====================================================================
+        # PHASE 3: TINTING LOGIC — SATURATION-AWARE (FIXED: POWER 12, EDGE 0.55)
+        # =====================================================================
+        v = max_val / 255.0
+        base_tint = min(0.85, max(0.15, 0.15 + 0.70 * (v ** 12)))
+        desaturation_pull = 1.0 - smoothstep(saturation, 0.05, 0.55)
+        tint_ratio = base_tint + (1.0 - base_tint) * desaturation_pull
+        tint_ratio = min(0.95, tint_ratio)
+        chroma_share = 1.0 - tint_ratio
 
 
-        # Hitam: hanya untuk warna gelap & kusam
-        # (DIPATCH: hard threshold v<0.6 dan s<0.4 diganti sigmoid kontinu,
-        #  supaya tidak ada cliff/lompatan tiba-tiba di sekitar batas tersebut)
-        dark_factor = 1.0 / (1.0 + np.exp((v - 0.6) / 0.08))   # smooth di sekitar v=0.6
-        dull_factor = 1.0 / (1.0 + np.exp((s - 0.4) / 0.08))   # smooth di sekitar s=0.4
-        bl_ratio = ((1.0 - v) ** 2) * 1.5 * (1.0 - s) * dark_factor * dull_factor
-
-
-        # Normalisasi tinting
-        total_tints = w_ratio + bl_ratio
-        if total_tints > 0:
-            tint_ratio = min(0.85, total_tints / (total_tints + 1.0))
+        # =====================================================================
+        # PHASE 4: DISTRIBUSI — CHROMA TETAP IDW, W:Bl LINEAR L* + BRIGHTNESS DAMPING
+        # =====================================================================
+        total_weight_final = sum(weights.values())
+        if total_weight_final > 0:
+            idw_ratio = {name: weights[name] / total_weight_final for name in TONER_PHYSICAL.keys()}
         else:
-            tint_ratio = 0.0
+            idw_ratio = {name: 0.0 for name in TONER_PHYSICAL.keys()}
+            idw_ratio['W'] = 1.0
 
+        chroma_names = ['R', 'G', 'B', 'Y']
+        neutral_names = ['W', 'Bl']
 
-        tint_amount = tint_ratio * capacity_ml
-        sisa_kapasitas = capacity_ml - tint_amount
+        chroma_total = sum(idw_ratio[n] for n in chroma_names)
+        chroma_norm = {n: (idw_ratio[n] / chroma_total if chroma_total > 0 else 0.0) for n in chroma_names}
 
+        L_target = target_lab[0]
+        L_W = phys_lab_cache['W'][0]
+        L_Bl = phys_lab_cache['Bl'][0]
 
-        # =====================================================================
-        # PHASE 4: DISTRIBUSI PRIMER DENGAN SPILLOVER AMAN
-        # =====================================================================
-        total_hue_weight = sum([weights.get(n, 0.0) for n in ['R', 'G', 'B', 'Y']])
+        if L_W > L_Bl:
+            w_fraction_linear = float(np.clip((L_target - L_Bl) / (L_W - L_Bl), 0.0, 1.0))
+        else:
+            w_fraction_linear = 0.5
+
+        brightness_pull = smoothstep(L_target, 45, 75) * (1.0 + saturation) / 2.0
+        w_fraction_linear = w_fraction_linear + (1.0 - w_fraction_linear) * brightness_pull
+        w_fraction_linear = min(1.0, max(0.0, w_fraction_linear))
+
+        neutral_norm = {'W': w_fraction_linear, 'Bl': 1.0 - w_fraction_linear}
+
+        toner_terkunci = set()
+
+        # =============================================================
+        # 🆕 PERBAIKAN 2: LOGIKA HITAM (Bl) UNTUK WARNA TERANG
+        # =============================================================
+        if v > 0.80 and saturation > 0.50:
+            # 🟢 Warna sangat terang & jenuh (oranye/kuning/merah terang)
+            # JANGAN paksa Bl = 0. Beri batas maksimal agar warna jadi "bata"
+            # tapi jangan terlalu gelap. Maksimal 8% dari total neutral.
+            max_bl = 0.08  
+            if neutral_norm['Bl'] > max_bl:
+                neutral_norm['Bl'] = max_bl
+                neutral_norm['W'] = 1.0 - max_bl
+            # 🚨 JANGAN tambahkan toner_terkunci.add('Bl') di sini!
+            # Biarkan Fase 7 menambahkan Bl sedikit demi sedikit (di bawah 8%)
+            # sampai ΔE nya benar-benar pas.
+
+        elif v > 0.65 and saturation > 0.35:
+            # Warna medium-terang & jenuh (hijau/biru langit)
+            # Tetap batasi 3% dan jangan dikunci.
+            if neutral_norm['Bl'] > 0.03:
+                neutral_norm['Bl'] = 0.03
+                neutral_norm['W'] = 0.97
+        # =============================================================
+
+        if chroma_total <= 0:
+            chroma_share = 0.0
+            tint_ratio = 1.0
+
         raw_volumes = {}
-
-
-        if total_hue_weight > 0:
-            chromatic_multiplier = 1.0 - np.exp(-s * 30.0)
-            for n in ['R', 'G', 'B', 'Y']:
-                base_vol = (weights.get(n, 0.0) / total_hue_weight) * sisa_kapasitas
-                raw_volumes[n] = base_vol * max(0.1, chromatic_multiplier)
-           
-            # Normalisasi jika overflow
-            total_primary = sum(raw_volumes.values())
-            if total_primary > sisa_kapasitas:
-                scale = sisa_kapasitas / total_primary
-                for n in ['R', 'G', 'B', 'Y']:
-                    raw_volumes[n] *= scale
-                volume_tertahan = 0.0
-            else:
-                volume_tertahan = sisa_kapasitas - total_primary
-        else:
-            volume_tertahan = sisa_kapasitas
-            for n in ['R', 'G', 'B', 'Y']:
-                raw_volumes[n] = 0.0
-
-
-        # Distribusi tinting
-        if total_tints > 0:
-            raw_volumes['W'] = (w_ratio / total_tints) * (tint_amount + volume_tertahan)
-            raw_volumes['Bl'] = (bl_ratio / total_tints) * (tint_amount + volume_tertahan)
-        else:
-            raw_volumes['W'] = 0.0
-            raw_volumes['Bl'] = 0.0
+        for n in chroma_names:
+            raw_volumes[n] = chroma_norm[n] * chroma_share * capacity_ml
+        for n in neutral_names:
+            raw_volumes[n] = neutral_norm[n] * tint_ratio * capacity_ml
 
 
         # =====================================================================
@@ -505,25 +558,137 @@ def upload_color_image():
         if total_raw > 0:
             mix_ratio = {name: raw_volumes.get(name, 0.0) / total_raw for name in TONER_PHYSICAL.keys()}
             exact_volumes = {name: ratio * capacity_ml for name, ratio in mix_ratio.items()}
-           
-            # Pembulatan awal
+
             mix_ml = {name: int(vol) for name, vol in exact_volumes.items()}
-           
-            # Distribusi sisa atau pengurangan
+
             diff = round(capacity_ml) - sum(mix_ml.values())
-           
+
             if diff > 0:
                 remainders = {name: vol - int(vol) for name, vol in exact_volumes.items()}
                 sorted_by_remainder = sorted(remainders.items(), key=lambda x: x[1], reverse=True)
                 for i in range(diff):
-                    mix_ml[sorted_by_remainder[i][0]] += 1
+                    mix_ml[sorted_by_remainder[i % len(sorted_by_remainder)][0]] += 1
             elif diff < 0:
                 remainders = {name: vol - int(vol) for name, vol in exact_volumes.items()}
                 sorted_by_remainder = sorted(remainders.items(), key=lambda x: x[1])
-                for i in range(abs(diff)):
-                    color = sorted_by_remainder[i][0]
+                i = 0
+                sisa = abs(diff)
+                while sisa > 0:
+                    color = sorted_by_remainder[i % len(sorted_by_remainder)][0]
                     if mix_ml[color] > 0:
                         mix_ml[color] -= 1
+                        sisa -= 1
+                    i += 1
+                    if i > 1000:
+                        break
+        else:
+            mix_ml = {name: 0 for name in TONER_PHYSICAL.keys()}
+            mix_ml['W'] = round(capacity_ml)
+
+
+        # =====================================================================
+        # PHASE 6: VERIFIKASI ROUND-TRIP
+        # =====================================================================
+        total_ml_final = sum(mix_ml.values())
+        if total_ml_final > 0:
+            predicted_lab = np.zeros(3)
+            for name, ml in mix_ml.items():
+                predicted_lab += phys_lab_cache[name] * (ml / total_ml_final)
+            predicted_delta_e = float(deltaE_cie76(target_lab, predicted_lab))
+        else:
+            predicted_delta_e = None
+
+        verification = {
+            'predicted_lab': predicted_lab.tolist() if total_ml_final > 0 else None,
+            'delta_e_prediksi': predicted_delta_e,
+            'peringatan': (
+                f"ΔE prediksi {predicted_delta_e:.2f} > 5, hasil campuran kemungkinan "
+                f"meleset cukup jauh dari target — pertimbangkan kalibrasi ulang."
+                if predicted_delta_e is not None and predicted_delta_e > 5 else None
+            ),
+        }
+
+        # =====================================================================
+        # PHASE 7: ITERATIVE REFINEMENT — LOOP SAMPAI ΔE ≤ 5
+        # =====================================================================
+        def refine_composition(mix_ml_awal, target_lab, phys_lab_cache,
+                                target_delta_e=5.0, max_iterations=300,
+                                toner_terkunci=None):
+            toner_terkunci = toner_terkunci or set()
+
+            def hitung_de(mix):
+                total = sum(mix.values())
+                if total <= 0:
+                    return 999.0, None
+                pred_lab = np.zeros(3)
+                for name, ml in mix.items():
+                    pred_lab += phys_lab_cache[name] * (ml / total)
+                return float(deltaE_cie76(target_lab, pred_lab)), pred_lab
+
+            current_mix = dict(mix_ml_awal)
+            current_de, current_pred_lab = hitung_de(current_mix)
+            nama_toner = list(TONER_PHYSICAL.keys())
+
+            iterasi = 0
+            for iterasi in range(1, max_iterations + 1):
+                if current_de <= target_delta_e:
+                    break
+
+                best_de = current_de
+                best_move = None
+                best_pred_lab = current_pred_lab
+
+                for donor in nama_toner:
+                    if current_mix[donor] <= 0:
+                        continue
+                    for penerima in nama_toner:
+                        if penerima == donor:
+                            continue
+                        if penerima in toner_terkunci:
+                            continue
+                        trial = dict(current_mix)
+                        trial[donor] -= 1
+                        trial[penerima] += 1
+                        de, pred_lab = hitung_de(trial)
+                        if de < best_de:
+                            best_de = de
+                            best_move = (donor, penerima)
+                            best_pred_lab = pred_lab
+
+                if best_move is None:
+                    break
+
+                donor, penerima = best_move
+                current_mix[donor] -= 1
+                current_mix[penerima] += 1
+                current_de = best_de
+                current_pred_lab = best_pred_lab
+
+            tercapai = current_de <= target_delta_e
+            return current_mix, current_de, iterasi, tercapai
+
+
+        mix_ml_final, delta_e_final, jumlah_iterasi, tercapai_target = refine_composition(
+            mix_ml, target_lab, phys_lab_cache, target_delta_e=5.0,
+            max_iterations=300, toner_terkunci=toner_terkunci
+        )
+
+        mix_ml = mix_ml_final
+
+        verification['delta_e_prediksi'] = delta_e_final
+        verification['delta_e_sebelum_refine'] = predicted_delta_e
+        verification['jumlah_iterasi_refine'] = jumlah_iterasi
+        verification['target_tercapai'] = tercapai_target
+        verification['toner_dikunci'] = list(toner_terkunci)
+        verification['peringatan'] = (
+            None if tercapai_target else
+            f"Sudah dicoba {jumlah_iterasi} iterasi refinement, ΔE terbaik yang bisa "
+            f"dicapai adalah {delta_e_final:.2f} (target ≤5). Kemungkinan besar warna "
+            f"target ini DI LUAR GAMUT toner yang tersedia, ATAU terkunci oleh aturan "
+            f"bisnis ({', '.join(toner_terkunci) if toner_terkunci else 'tidak ada'}) "
+            f"— pertimbangkan tambah toner primer baru (Orange/Violet/Cyan)."
+        )
+
 
         # 6. SIMPAN GAMBAR KE STATIC
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -615,4 +780,3 @@ def test_firebase():
 # -------------------------------
 if __name__ == '__main__':
     app.run(debug=True)
-
